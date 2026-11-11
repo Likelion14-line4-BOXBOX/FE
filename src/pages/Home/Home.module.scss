@@ -1,0 +1,348 @@
+$radius-lg: 16px;
+$radius-md: 12px;
+
+.productCard {
+  .productName,
+  .productSpec,
+  .productLink {
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .productSpec {
+    margin-top: 4px;
+  }
+
+  .productLink {
+    display: block;
+    margin-top: 4px;
+  }
+}
+
+.home {
+  min-height: 100%;
+  padding-top: 62px; 
+  background: var(--gray-50);
+}
+
+// 헤더
+.header {
+  position: relative;
+  height: 65px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .logo {
+    width: 161px;
+    height: 29px;
+    display: block;
+
+    margin-bottom: 27px;
+  }
+
+    .mail {
+    position: absolute;
+    right: 25px;
+    top: 0px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 35px;
+    height: 35px;
+    padding: 0;
+
+    color: var(--gray-900);
+    background-color: var(--gray-50);
+    border: none;
+
+    svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .badge {
+        position: absolute;
+        top: -1px;
+        right: -4px;
+        z-index: 2;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 16px;
+        height: 16px;
+        padding: 0;
+        border-radius: 50%;
+
+        background: var(--brand-500);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        
+    }
+    }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 0 20px 90px;
+}
+
+// 다음 레이스 카드
+.raceCard {
+  position: relative;
+  padding: 16px 20px;
+  border-radius: $radius-lg;
+  background: var(--gray-900);
+  color: #fff;
+
+
+  box-shadow: 0px 0px 10px rgba(3, 3, 3, 0.03), 0px 0px 40px rgba(3, 3, 3, 0.05);
+
+
+  .dday {
+    position: absolute;
+    right: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-200);
+  }
+
+  .raceInfo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    margin-top: 20px;
+  }
+
+  .track {
+    width: 117px;
+    height: 68px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: $radius-md;
+    background: #fff;
+
+
+  }
+
+  .trackImg {
+    width: 92px;
+    height: 56px;
+    display: block;
+  }
+
+    .round {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+    }
+
+    .raceName {
+    margin: 4px 0 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 24px;
+    }
+
+    .period {
+    margin: 4px 0 0;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    }
+
+  .session {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 23px;
+    padding: 12px 16px;
+    border-radius: $radius-md;
+    background: #fff;
+    color: var(--gray-900);
+
+    width: 322px;
+    height: 59px;
+  }
+
+  .sessionName {
+    margin: 0;
+
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .sessionTime {
+    margin: 0;
+
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .remaining {
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+// 상품 카드
+.productCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 12px 17px;
+  background: #fff;
+  width: 362px;
+  height: 92px;
+
+
+  box-shadow: 0px 0px 10px rgba(3, 3, 3, 0.03), 0px 0px 40px rgba(3, 3, 3, 0.05);
+  border-radius: 18px;
+
+
+  .productImg {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    display: block;
+    object-fit: contain;
+  }
+
+  .productBody {
+    flex: 1;
+    min-width: 0; 
+  }
+
+  .productName {
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .productSpec {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .productLink {
+    display: inline-block;
+    font-size: 14px;
+    color: black;
+    text-decoration: underline;
+  }
+}
+
+// TEAM RADIO
+.radio {
+  .radioHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+  }
+
+  .radioTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .more {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--gray-500);
+    text-decoration: none;
+  }
+
+  .postList {
+    margin: 0;
+    padding: 6px 18px;
+    list-style: none;
+    border-radius: $radius-lg;
+    background: #fff;
+
+       box-shadow: 0px 0px 10px rgba(3, 3, 3, 0.03), 0px 0px 40px rgba(3, 3, 3, 0.05);
+   border-radius: 18px;
+  }
+
+  .postItem {
+    margin: 0;
+    padding: 12px 0;
+    list-style: none;
+    border-bottom: 1px solid var(--gray-100);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .board {
+    display: block;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+    color: var(--brand-500);
+  }
+
+  .postRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 3px 0 0;
+    padding: 0;
+  }
+
+  .postTitle {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+    color: var(--gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .likes {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--gray-300);
+
+    svg,
+    img {
+      display: block;
+      width: 14px;
+      flex-shrink: 0;
+    }
+  }
+}
