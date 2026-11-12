@@ -1,0 +1,230 @@
+@font-face {
+    font-family: "KBL Jump TTF";
+    src: url("../../assets/fonts/KBLJump_EB_Extended.ttf") format("truetype");
+    font-weight: 800;
+    font-display: swap;
+}
+
+.page {
+    min-height: 100%;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    font-family: system-ui, sans-serif;
+}
+
+.header {
+    padding-top: 30px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--gray-50);
+
+    h1 {
+        margin: 0 0 18px;
+        display: flex;
+        justify-content: center;
+    }
+
+    img {
+        display: block;
+        width: min(244px, 75%);
+        height: auto;
+    }
+}
+
+.tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-inline: 12px;
+    border-bottom: 1px solid #e0e0e0;
+
+    > * {
+        display: grid;
+        place-items: center;
+        min-height: 40px;
+        padding: 0 4px;
+        border: 0;
+        border-bottom: 2.667px solid transparent;
+        background: transparent;
+        color: var(--gray-300);
+        font: inherit;
+        font-size: 15px;
+    }
+
+    .activeTab {
+        border-bottom-color: var(--brand-500);
+        color: var(--gray-900);
+        font-weight: 800;
+    }
+}
+
+.content {
+    padding: 12px 20px 20px;
+}
+
+.round {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 15px 18px;
+    border-radius: 10px;
+    background: #111111;
+    color: #fff;
+
+    &.closed {
+        background: var(--gray-300);
+    }
+
+    h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        font-weight: 500;
+    }
+}
+
+.badge {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #fff;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.guide {
+    margin: 12px 0;
+    color: var(--gray-300);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.notice {
+    margin: 12px 0 8px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow-light);
+
+    strong {
+        display: block;
+        font-size: 14px;
+        color: var(--gray-900);
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    p {
+        margin: 4px 0 10px;
+        color: var(--gray-300);
+        font-size: 11px;
+        line-height: 18.5px;
+    }
+
+    button {
+        width: 100%;
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--gray-900);
+        color: #fff;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
+.stocks {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Pretendard", sans-serif;
+    font-variant-numeric: tabular-nums;
+
+    td,
+    th {
+        padding: 10px 4px;
+        vertical-align: middle;
+    }
+
+    .rank {
+        width: 42px;
+        padding-right: 20px;
+        padding-left: 20px;
+        text-align: left;
+        white-space: nowrap;
+        font-family: "KBL Jump TTF", sans-serif;
+        font-size: 11px;
+    }
+
+    .driver {
+        padding-left: 0;
+        text-align: left;
+        font-size: 15px;
+        word-break: keep-all;
+        font-weight: 700;
+
+        small {
+            display: block;
+            margin-top: 3px;
+            color: var(--gray-300);
+            font-size: 11px;
+            font-weight: 400;
+        }
+    }
+
+    .quote {
+        width: 108px;
+        padding-right: 0;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .volume {
+        width: 60px;
+        padding-left: 20px;
+        color: #5e5e5e;
+        text-align: left;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 500;
+    }
+}
+
+.price {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 18px;
+    display: inline-block;
+}
+
+.change {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: 48px;
+    margin-left: 8px;
+    color: var(--brand-500);
+    font-size: 12px;
+    font-weight: 700;
+    vertical-align: 2px;
+
+    img {
+        width: 9px;
+        height: 9px;
+    }
+}
+
+.visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
