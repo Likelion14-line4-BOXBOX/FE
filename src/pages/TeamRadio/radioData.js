@@ -25,8 +25,7 @@ export const teams = [
   asset,
   tags: ['전체', name, ...drivers],
 
-  // 완성된 배너를 src/assets/images/teamradio/에 넣고 파일명을 지정하세요.
-  banner: null,
+  banner: `${asset}_배너.svg`,
 }));
 
 export const boards = [

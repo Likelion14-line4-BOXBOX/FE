@@ -18,6 +18,58 @@ const assets = import.meta.glob(
   },
 );
 
+function SearchIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="butt"
+      aria-hidden="true"
+    >
+      <circle cx="10" cy="10" r="7" />
+      <path d="m17 17 5 5" />
+    </svg>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 3.5h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7L3 22V5.5a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled = false }) {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2.2"
+      aria-hidden="true"
+    >
+      <path d="M12 21 3.5 12.5C-2 7 5.5-1 12 6c6.5-7 14 1 8.5 6.5Z" />
+    </svg>
+  );
+}
+
 function MemberIcon() {
   return (
     <svg
@@ -443,8 +495,16 @@ export default function TeamRadio({ liveStatus = 'open' }) { //입장 전: sched
             <span>
               {item.author} · {item.mine ? '방금' : '30분 전'}
             </span>
-            <span>
-              ▱ {item.comments.length} ♡ {item.likes}
+            <span className={s.postCounts}>
+              <span className={s.countItem} aria-label={`댓글 ${item.comments.length}개`}>
+                <CommentIcon />
+                {item.comments.length}
+              </span>
+
+              <span className={s.countItem} aria-label={`좋아요 ${item.likes}개`}>
+                <HeartIcon />
+                {item.likes}
+              </span>
             </span>
           </span>
         </button>
@@ -631,7 +691,7 @@ export default function TeamRadio({ liveStatus = 'open' }) { //입장 전: sched
                 go('search', { board: board.id })
               }
             >
-              ⌕
+              <SearchIcon />
             </button>,
           )}
 
@@ -714,13 +774,25 @@ export default function TeamRadio({ liveStatus = 'open' }) { //입장 전: sched
           {postRows(filteredPosts)}
 
           {board.id !== 'archive' && (
-            <button
-              type="button"
-              className={s.writeButton}
-              onClick={() => beginWrite()}
+          <button
+            type="button"
+            className={s.writeButton}
+            onClick={() => beginWrite()}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
-              ♢ 글쓰기
-            </button>
+              <path d="M4 15 15 4a2 2 0 0 1 3 0l2 2a2 2 0 0 1 0 3L9 20H4Z" />
+            </svg>
+            글쓰기
+          </button>
           )}
         </>
       )}
@@ -747,7 +819,7 @@ export default function TeamRadio({ liveStatus = 'open' }) { //입장 전: sched
                 }
               />
               <button type="submit" aria-label="검색">
-                ⌕
+                <SearchIcon />
               </button>
             </form>
           </div>
