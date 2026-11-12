@@ -45,7 +45,9 @@ export default function RaceMarket() {
       <header className={styles.header}>
         <h1><img src={logo} alt="Race Market" /></h1>
         <div className={styles.tabs} aria-label="레이스마켓 메뉴">
-          <span className={styles.activeTab} aria-current="page">드라이버</span>
+          <span className={styles.activeTab} aria-current="page">
+            {isClosed ? "드라이버 랭킹" : "드라이버"}
+          </span>
           <button type="button" disabled>유저 랭킹</button>
           <button type="button" disabled>마이</button>
         </div>
