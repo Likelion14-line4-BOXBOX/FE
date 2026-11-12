@@ -55,7 +55,7 @@ export default function RaceMarket() {
           </section>
         ) : (
           <p className={styles.guide}>
-            시작 가격은 지난 레이스 순위 기준이며, 본 레이스 시작 1시간 전에 마켓을 닫습니다.
+            시작 가격은 전 레이스 기준 순위이며, 본 레이스 시작시 마켓을 닫습니다.
           </p>
         )}
 
