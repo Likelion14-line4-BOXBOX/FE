@@ -320,18 +320,22 @@ function Modal({ children, onClose, variant = 'default' }) {
         }
       }}
     >
-      {variant === 'image' && (
-        <button
-          type="button"
-          className={`${s.modalClose} ${s.imageModalClose}`}
-          aria-label="팝업 닫기"
-          onClick={onClose}
-        >
-          <CloseIcon />
-        </button>
-      )}
+      {variant === 'image' ? (
+        <div className={s.imageViewer}>
+          {children}
 
-      {children}
+          <button
+            type="button"
+            className={s.imageModalClose}
+            aria-label="팝업 닫기"
+            onClick={onClose}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      ) : (
+        children
+      )}
     </dialog>
   );
 }
@@ -1023,7 +1027,7 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
       } ${view === 'write' ? s.writePage : ''} ${view === 'chat' ? s.chatPage : ''}`}
       data-radio-focus={focused ? 'true' : 'false'}
     >
-      {error && !modal && (
+      {error && !modal && view !== 'write' && (
         <p role="alert" className={s.errorNotice}>
           {error}
         </p>
@@ -1425,6 +1429,11 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
           )}
 
           <form className={s.editor} onSubmit={publish}>
+            {error && !modal && (
+              <p role="alert" className={s.errorNotice}>
+                {error}
+              </p>
+            )}
             <label>
               게시판
               <input value={board.name} readOnly />

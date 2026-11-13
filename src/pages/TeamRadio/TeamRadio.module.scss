@@ -2452,10 +2452,7 @@
   max-height: calc(var(--app-height) - 80px);
 }
 
-.imageDialog .imageModalClose {
-  top: 12px;
-  right: 12px;
-}
+
 
 @media (max-width: 360px) {
   .userBoard {
@@ -2503,4 +2500,16 @@
 .messageMenu:not(.reportMenu) button:only-child,
 .messageMenu:not(.reportMenu) button + button {
   color: var(--brand-500);
+}
+
+.imageViewer {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.imageDialog .imageModalClose {
+  top: -14px;
+  right: -14px;
 }
