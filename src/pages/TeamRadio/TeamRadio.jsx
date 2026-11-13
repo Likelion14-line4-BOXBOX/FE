@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import useTeamRadioData, { MOCK_USER } from './useTeamRadioData';
 import { formatKoreanTime, REPORT_REASONS, findTeamBoard } from './radioModel';
 import s from './TeamRadio.module.scss';
+import backIcon from '../../assets/images/teamradio/back-button.svg';
+import reportSiren from '../../assets/images/teamradio/🚨.svg';
 
 const assets = import.meta.glob('../../assets/images/teamradio/*.{svg,png,jpg,jpeg,webp}', {
   eager: true,
@@ -22,6 +24,56 @@ const SEARCH_PERIOD_OPTIONS = [
   { value: '30', label: '최근 1개월' },
   { value: '365', label: '최근 1년' },
 ];
+
+function ChevronIcon({ direction = 'right', className = '' }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.65"
+      aria-hidden="true"
+    >
+      <path
+        d={
+          direction === 'down'
+            ? 'm3 6 5 5 5-5'
+            : 'm6 2 6 6-6 6'
+        }
+      />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <img
+      src={backIcon}
+      width="22"
+      height="22"
+      alt=""
+      aria-hidden="true"
+    />
+  );
+}
+
+function DropdownIcon({ className = '' }) {
+  return (
+    <svg
+      className={className}
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M1 4h10L6 9Z" />
+    </svg>
+  );
+}
 
 function SearchIcon() {
   return (
@@ -337,7 +389,7 @@ function SearchDropdown({ label, value, options, onChange }) {
     >
       <summary aria-label={`${label}: ${selected.label}`}>
         {selected.label}
-        <span className={s.sortArrow} aria-hidden="true" />
+        <DropdownIcon className={s.sortArrow} />
       </summary>
 
       <div className={s.sortMenu} role="group" aria-label={`${label} 옵션`}>
@@ -500,7 +552,10 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
   const canSendMessage = race.canSendMessage === true;
   const chatScheduled = race.status === 'SCHEDULED';
 
-  const chatMessages = radio.getMessages(race.id);
+  // 변경
+  const chatMessages = radio
+    .getMessages(race.id)
+    .filter((message) => !message.isDeleted);
 
   const focused = ['post', 'write', 'search', 'chat'].includes(view);
 
@@ -861,7 +916,7 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
           aria-label={view === 'write' ? '글쓰기 닫기' : '뒤로가기'}
           onClick={onBack}
         >
-          {view === 'write' ? <CloseIcon /> : '‹'}
+          {view === 'write' ? <CloseIcon /> : <BackIcon />}
         </button>
 
         <h1>{title}</h1>
@@ -976,25 +1031,27 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
 
       {view === 'home' && (
         <>
-          <h1 className={s.logo}>
-            <Asset name="Team Radio" fallback="Team Radio" />
-          </h1>
+          <div className={s.homeHeader}>
+            <h1 className={s.logo}>
+              <Asset name="Team Radio" fallback="Team Radio" />
+            </h1>
 
-          <div className={s.tabs} aria-label="팀 라디오 메뉴">
-            {[
-              ['board', '게시판'],
-              ['chat', '채팅'],
-            ].map(([id, name]) => (
-              <button
-                type="button"
-                key={id}
-                aria-pressed={tab === id}
-                className={tab === id ? s.selected : ''}
-                onClick={() => setParams({ tab: id })}
-              >
-                {name}
-              </button>
-            ))}
+            <div className={s.tabs} aria-label="팀 라디오 메뉴">
+              {[
+                ['board', '게시판'],
+                ['chat', '채팅'],
+              ].map(([id, name]) => (
+                <button
+                  type="button"
+                  key={id}
+                  aria-pressed={tab === id}
+                  className={tab === id ? s.selected : ''}
+                  onClick={() => setParams({ tab: id })}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {tab === 'board' ? (
@@ -1044,7 +1101,9 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
                     >
                       <strong>{item.name}</strong>
                       <span>{item.description}</span>
-                      <span>›</span>
+                      <span>
+                        <ChevronIcon direction="right" />
+                      </span>
                     </button>
                   ))}
               </div>
@@ -1189,7 +1248,7 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
               <summary>
                 {sort === 'popular' ? '인기순' : '최신순'}
 
-                <span className={s.sortArrow} aria-hidden="true" />
+                <DropdownIcon className={s.sortArrow} />
               </summary>
 
               <div className={s.sortMenu}>
@@ -1245,7 +1304,7 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
               aria-label="뒤로가기"
               onClick={backToBoard}
             >
-              ‹
+              <BackIcon />
             </button>
 
             <form
@@ -1780,12 +1839,12 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
                         onContextMenu={(event) => {
                           event.preventDefault();
 
-                          if (!message.isDeleted && !(message.mine && !chatOpen)) {
+                          if (!message.isDeleted) {
                             setMenu(message.id);
                           }
                         }}
                         onClick={() => {
-                          if (!message.isDeleted && !(message.mine && !chatOpen)) {
+                          if (!message.isDeleted) {
                             setMenu(menu === message.id ? null : message.id);
                           }
                         }}
@@ -1796,29 +1855,35 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
                       <small>{message.date}</small>
                     </div>
 
-                    {menu === message.id &&
-                      !message.isDeleted &&
-                      !(message.mine && !chatOpen) && (
+                    {menu === message.id && !message.isDeleted && (
                       <div className={`${s.messageMenu} ${!message.canDelete ? s.reportMenu : ''}`}>
                         {message.canDelete ? (
                           <>
-                          <button type="button" onClick={() => {
-                            setEditingMessage(message.id);
-                            setInput(messageEdits[message.id] ?? message.text);
-                            setMenu(null);
-                            requestAnimationFrame(() => composerRef.current?.focus());
-                          }}>수정하기</button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setModal({
-                                type: 'deleteMessage',
-                                id: message.id,
-                              })
-                            }
-                          >
-                            삭제하기
-                          </button>
+                            {canSendMessage && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingMessage(message.id);
+                                  setInput(messageEdits[message.id] ?? message.text);
+                                  setMenu(null);
+                                  requestAnimationFrame(() => composerRef.current?.focus());
+                                }}
+                              >
+                                수정하기
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModal({
+                                  type: 'deleteMessage',
+                                  id: message.id,
+                                })
+                              }
+                            >
+                              삭제하기
+                            </button>
                           </>
                         ) : (
                           <ReportActions
@@ -1915,9 +1980,14 @@ export default function TeamRadio({ liveStatus = 'open', currentUser = MOCK_USER
             </form>
           ) : modal.type === 'reported' ? (
             <>
-              <span className={s.reportSiren} aria-hidden="true">
-                🚨
-              </span>
+              <img
+                src={reportSiren}
+                className={s.reportSiren}
+                width={32}
+                height={32}
+                alt=""
+                aria-hidden="true"
+              />
 
               <h2>신고 완료</h2>
 

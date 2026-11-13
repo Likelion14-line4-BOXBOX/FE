@@ -8,8 +8,9 @@ export const ALL_TAG = {
 
 export const REPORT_REASONS = [
   { value: 'ABUSE', label: '욕설, 비하' },
-  { value: 'SPAM', label: '상업적 광고·도배' },
+  { value: 'SPAM', label: '상업적 광고' },
   { value: 'INAPPROPRIATE', label: '선정적인 내용' },
+  { value: 'CLICKBAIT', label: '낚시, 도배' },
   { value: 'OTHER', label: '기타' },
 ];
 
@@ -280,4 +281,27 @@ export function findTeamBoard(boards, teamId) {
         item.teamId === teamId,
     ) ?? null
   );
+}
+export function threadComments(comments) {
+  const roots = comments.filter((item) => item.parentId == null);
+  const replies = new Map();
+  const rootIds = new Set(roots.map((item) => item.commentId));
+
+  for (const item of comments) {
+    if (item.parentId == null) continue;
+
+    const siblings = replies.get(item.parentId) ?? [];
+    siblings.push(item);
+    replies.set(item.parentId, siblings);
+  }
+
+  return [
+    ...roots.flatMap((item) => [
+      item,
+      ...(replies.get(item.commentId) ?? []),
+    ]),
+    ...comments.filter(
+      (item) => item.parentId != null && !rootIds.has(item.parentId),
+    ),
+  ];
 }
