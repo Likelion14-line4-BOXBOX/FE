@@ -1,4 +1,11 @@
-import { BrowserRouter, Route, Routes, useMatch } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useMatch,
+  useLocation,
+} from "react-router-dom";
+
 import BottomNav from "./components/common/BottomNav/BottomNav";
 import Home from "./pages/Home/Home";
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
@@ -9,21 +16,44 @@ import MyGarage from "./pages/MyGarage/MyGarage";
 
 function AppRoutes() {
   const driverDetail = useMatch("/race-market/drivers/:driverId");
-  const settlementDetail = useMatch("/race-market/settlements/:roundId");
+  const settlementDetail = useMatch(
+    "/race-market/settlements/:roundId",
+  );
+
+  const location = useLocation();
+
+  const garageEditing =
+    location.pathname === "/my-garage" &&
+    new URLSearchParams(location.search).get("edit") === "1";
+
+  const hideBottomNav =
+    driverDetail || settlementDetail || garageEditing;
 
   return (
     <>
       <main className="content">
         <Routes>
           <Route path="/" element={<Home />} />
+
           <Route path="/team-radio" element={<TeamRadio />} />
+
           <Route path="/race-market" element={<RaceMarket />} />
-          <Route path="/race-market/drivers/:driverId" element={<RaceMarketBuySell />} />
-          <Route path="/race-market/settlements/:roundId" element={<RaceMarketSettlement />}/>
+
+          <Route
+            path="/race-market/drivers/:driverId"
+            element={<RaceMarketBuySell />}
+          />
+
+          <Route
+            path="/race-market/settlements/:roundId"
+            element={<RaceMarketSettlement />}
+          />
+
           <Route path="/my-garage" element={<MyGarage />} />
         </Routes>
       </main>
-      {!driverDetail && !settlementDetail && <BottomNav />}
+
+      {!hideBottomNav && <BottomNav />}
     </>
   );
 }
