@@ -8,6 +8,14 @@ html,
 body {
   margin: 0;
   background: #fff;
+  font-family: "Pretendard", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }
 
 #root {
@@ -26,20 +34,9 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none; 
+  scrollbar-width: none;
 }
 
 .content::-webkit-scrollbar {
-  display: none; 
-}
-
-body {
-  font-family: "Pretendard", sans-serif;
-}
-
-button,
-input,
-textarea,
-select {
-  font-family: inherit;
+  display: none;
 }
