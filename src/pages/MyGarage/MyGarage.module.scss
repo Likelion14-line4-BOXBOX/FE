@@ -53,8 +53,13 @@
 
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
   display: flex;
   justify-content: center;
+
   padding: 30px 0 25px;
 }
 
@@ -146,7 +151,6 @@
   border-radius: 50%;
 
   background: var(--gray-100, #d9d9da);
-  box-shadow: 0 3px 12px #0002;
 
   img {
     display: block;
