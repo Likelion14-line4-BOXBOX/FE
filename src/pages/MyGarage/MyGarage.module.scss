@@ -1,0 +1,852 @@
+@import "@fontsource/bebas-neue";
+
+:global(#root) {
+  position: relative;
+  isolation: isolate;
+
+  width: 402px;
+  height: 874px;
+  max-width: 100vw;
+  max-height: 100dvh;
+
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+  background: #fff;
+}
+
+.page {
+  min-height: 100%;
+  padding: 0 20px 24px;
+
+  background: var(--gray-50, #f5f5f6);
+  color: var(--gray-900, #030303);
+
+  h1,
+  h2,
+  p {
+    margin: 0;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--blue-500, #2a66e4);
+    outline-offset: 3px;
+  }
+}
+
+.editing {
+  background: #fff;
+}
+
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  display: flex;
+  justify-content: center;
+
+  padding: 30px 0 25px;
+}
+
+.logo {
+  width: 205px;
+  height: 29px;
+  margin: 0;
+  line-height: 0;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+
+/* 프로필 */
+.profile {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 28px;
+
+  min-height: 94px;
+  padding: 10px 22px;
+
+  &::before,
+  &::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+
+    width: 7px;
+
+    background: #DA291C;
+    content: "";
+  }
+
+  &::before {
+    left: 0;
+
+    clip-path: polygon(
+      100% 0,
+      100% 3%,
+      30% 5%,
+      30% 95%,
+      100% 97%,
+      100% 100%,
+      0 97%,
+      0 3%
+    );
+  }
+
+  &::after {
+    right: 0;
+    transform: scaleX(-1);
+
+    clip-path: polygon(
+      100% 0,
+      100% 3%,
+      30% 5%,
+      30% 95%,
+      100% 97%,
+      100% 100%,
+      0 97%,
+      0 3%
+    );
+  }
+}
+
+.avatarArea {
+  display: flex;
+  flex: 0 0 71px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+
+  overflow: hidden;
+
+  border: 2px solid #030303;
+  border-radius: 50%;
+
+  background: var(--gray-100, #d9d9da);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  > span {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+
+    font-size: 25px;
+    font-weight: 800;
+  }
+}
+
+.profileText {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    margin-bottom: 8px;
+
+    color: var(--900, #030303);
+    font-family: "Bebas Neue";
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  p {
+    overflow-wrap: anywhere;
+    color: var(--900, #030303);
+    font-family: Pretendard;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+  }
+}
+
+.followInfo {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--900, #030303);
+}
+
+.profileActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  margin: 20px 0;
+
+  button {
+    height: 43px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: var(--gray-100, #d9d9da);
+    color: #000;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    &:last-child {
+      background: #000;
+      color: #fff;
+    }
+  }
+}
+
+/* 기본 팀/선수 카드*/
+.favorites {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.favoriteCard {
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 177 / 124;
+
+  overflow: hidden;
+  border-radius: 15px;
+
+  background: linear-gradient(
+    110deg,
+    #530014 0%,
+    #f00038 100%
+  );
+  color: #fff;
+}
+
+.favoriteArtwork {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+
+  overflow: hidden;
+
+  > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transform: scale(1.47);
+    transform-origin: center;
+  }
+
+  > .placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0;
+  }
+}
+
+.favoriteTitle {
+  position: absolute;
+  z-index: 1;
+  top: 11px;
+  left: 12px;
+
+  margin: 0;
+  color: #fff;
+
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+
+  pointer-events: none;
+}
+
+.favoriteFooter {
+  position: absolute;
+  z-index: 1;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+
+  color: #fff;
+  pointer-events: none;
+}
+
+.favoriteName {
+  min-width: 0;
+
+  font-family: "Pretendard", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  word-break: keep-all;
+}
+
+.favoriteRank {
+  flex-shrink: 0;
+
+  font-family: "Pretendard", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* 자산 카드 */
+.marketCard {
+  margin: 20px 0;
+  padding: 20px;
+
+  border-radius: 20px;
+  background: #F5F5F6;
+  
+  box-shadow: 0 0 10px 0 rgba(3, 3, 3, 0.03), 0 0 40px 0 rgba(3, 3, 3, 0.05);
+}
+
+.marketHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 15px;
+
+  h2 {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+  }
+}
+
+.marketStats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+
+  > div {
+    min-width: 0;
+  }
+
+  span {
+    display: block;
+    margin-bottom: 3px;
+
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  strong {
+    display: block;
+
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+
+    color: #030303;
+  }
+}
+
+.marketStats strong.positive {
+  color: #E10600;
+}
+/*자산 카드 비공개*/
+.privateAssets {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 52px;
+
+  border-radius: 8px;
+  background: #eee;
+  color: var(--gray-300, #8b8b8b);
+
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.marketCard.privateMarketCard {
+  background: #fff;
+}
+
+/* 레이스 스탬프*/
+.stampCard {
+  width: 100%;
+  aspect-ratio: 362 / 217;
+
+  overflow: hidden;
+  border-radius: 20px;
+  background: #030303;
+}
+
+.stampImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+
+  border-radius: 0;
+  background: #030303;
+  object-fit: contain;
+
+  transform: scale(1.4);
+  transform-origin: center;
+}
+
+/* 프로필 수정 헤더 */
+.editHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 92px;
+}
+
+.backButton {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  place-items: center;
+
+  border: 0;
+  background: none;
+  color: #030303;
+}
+
+.saveButton {
+  min-width: 66px;
+  height: 36px;
+  padding: 0 17px;
+
+  border: 0;
+  border-radius: 25px;
+
+  background: #030303;
+  color: #fff;
+
+  font-size: 14px !important;
+  font-weight: 700 !important;
+
+  &:disabled {
+    background: var(--gray-300, #8b8b8b);
+    opacity: 1;
+    cursor: default;
+  }
+}
+
+/* 프로필 수정 입력 영역 */
+.editProfile {
+  gap: 30.5px;
+  padding: 0 0 24px;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+
+  .avatarArea {
+    flex-basis: 70px;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+    border: 0;
+  }
+}
+
+.photoChange {
+  padding-top:4px;
+
+  border: 0;
+  background: none;
+  color: #000;
+
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.3;
+}
+
+.fileInput {
+  display: none;
+}
+
+.inputs {
+  flex: 1;
+  min-width: 0;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    & + label {
+      margin-top: 9px;
+    }
+
+    > span {
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 12px;
+
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+
+    background: #fff;
+    color: #030303;
+
+    font-size: 12px;
+  }
+}
+
+/* 수정 화면 팀/선수 카드*/
+.editCard {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 177 / 124;
+
+  padding: 12px;
+
+  overflow: hidden;
+
+  border-radius: 15px;
+  background: #fff;
+
+  box-shadow: 0 0 10px 0 rgba(3, 3, 3, 0.06), 0 0 40px 0 rgba(3, 3, 3, 0.08);
+
+  h2 {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+
+    color: #030303;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1;
+  }
+}
+
+.editFavoriteImage {
+  display: block;
+  flex-shrink: 0;
+
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.changeButton {
+  display: block;
+  margin: auto auto 0;
+  padding: 5px 0 0;
+
+  border: 0;
+  background: none;
+  color: #DA291C;
+
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1.2;
+}
+
+/* 자산 공개 설정 */
+.privacy {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editing .marketCard {
+  background: #fff;
+}
+
+.switch {
+  width: 47px;
+  height: 21px;
+  padding: 3px;
+
+  border: 0;
+  border-radius: 20px;
+
+  background: var(--gray-100, #d9d9da);
+
+  > span {
+    display: block;
+    width: 16px;
+    height: 15px;
+
+    border-radius: 20px;
+    background: #fff;
+  }
+}
+
+.switchOn {
+  background: #030303;
+
+  > span {
+    transform: translateX(25px);
+  }
+}
+
+/*
+ * #root 안에 포털로 렌더링.
+ * 브라우저 전체가 아닌 앱 영역만 덮음.
+ */
+.overlay {
+  position: absolute;
+  z-index: 100;
+  inset: 0;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: 0 20px;
+
+  background: rgb(0 0 0 / 25%);
+
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--blue-500, #2a66e4);
+    outline-offset: -2px;
+  }
+}
+
+
+.sheet {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 362px;
+  max-width: 100%;
+
+  height: 386px;
+  max-height: 100%;
+
+  padding: 32px 20px 0;
+
+  overflow: hidden;
+
+  border-radius: 22px 22px 0 0;
+  background: #fff;
+  color: #030303;
+
+  > h2 {
+    flex-shrink: 0;
+    margin: 0 0 22px;
+
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+
+  width: 54px;
+  height: 4px;
+
+  border-radius: 4px;
+  background: var(--gray-100, #d9d9da);
+
+  transform: translateX(-50%);
+}
+
+
+.teamOptions,
+.driverOptions {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.teamOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .option {
+    flex-shrink: 0;
+  }
+}
+
+.driverOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+
+  padding: 0 9px;
+}
+
+.option {
+  display: block;
+  min-width: 0;
+  padding: 0;
+
+  overflow: hidden;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .selectedImage {
+    display: none;
+  }
+
+  &:hover,
+  &:focus-visible,
+  &.selected {
+    .normalImage {
+      display: none;
+    }
+
+    .selectedImage {
+      display: block;
+    }
+  }
+}
+
+.confirmButton {
+  flex-shrink: 0;
+
+  width: 100%;
+  height: 51px;
+  margin-top: 20px;
+  margin-bottom: 28px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #030303;
+  color: #fff;
+
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.emptyMessage {
+  margin: 0;
+  padding: 15px 0;
+
+  color: var(--gray-400, #727272);
+
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.error {
+  margin: 0 0 15px !important;
+  padding: 12px;
+
+  border-radius: 8px;
+
+  background: #fff0ee;
+  color: #bf0000;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
