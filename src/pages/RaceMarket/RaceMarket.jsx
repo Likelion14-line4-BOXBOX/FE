@@ -3,6 +3,7 @@ import logo from "../../assets/images/racemarket/race-market-logo.svg";
 import increaseIcon from "../../assets/images/racemarket/red-increase.svg";
 import styles from "./RaceMarket.module.scss";
 import { drivers, getMockPrice } from "./raceMarketMock";
+import { RaceMarketMy } from "./RaceMarketMy";
 
 const round = {
   number: 19,
@@ -15,21 +16,42 @@ const formatNumber = new Intl.NumberFormat("ko-KR");
 export default function RaceMarket() {
   const [searchParams] = useSearchParams();
   const isClosed = searchParams.get("preview") === "closed";
+  const isMyTab = searchParams.get("tab") === "my";
+  const driverTabUrl = isClosed ? "/race-market?preview=closed" : "/race-market";
+  const myTabUrl = isClosed
+    ? "/race-market?tab=my&preview=closed"
+    : "/race-market?tab=my";
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <h1><img src={logo} alt="Race Market" /></h1>
         <div className={styles.tabs} aria-label="레이스마켓 메뉴">
-          <span className={styles.activeTab} aria-current="page">
+          <Link
+            to={driverTabUrl}
+            className={isMyTab ? undefined : styles.activeTab}
+            aria-current={isMyTab ? undefined : "page"}
+          >
             {isClosed ? "드라이버 랭킹" : "드라이버"}
-          </span>
+          </Link>
+
           <button type="button" disabled>유저 랭킹</button>
-          <button type="button" disabled>마이</button>
+
+          <Link
+            to={myTabUrl}
+            className={isMyTab ? styles.activeTab : undefined}
+            aria-current={isMyTab ? "page" : undefined}
+          >
+            마이
+          </Link>
         </div>
       </header>
 
       <div className={styles.content}>
+        {isMyTab ? (
+          <RaceMarketMy isClosed={isClosed} />
+        ) : (
+          <>
         <section
           className={isClosed ? `${styles.round} ${styles.closed}` : styles.round}
           aria-labelledby="market-round-title"
@@ -105,6 +127,8 @@ export default function RaceMarket() {
             })}
           </tbody>
         </table>
+        </>
+      )}
       </div>
     </div>
   );
