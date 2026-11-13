@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
 import trackMexico from "../../assets/images/home/track-mexico.svg";
-import watch from "../../assets/images/home/watch.svg";
+import { useState } from "react";
+import watchAd from "../../assets/images/home/watch.svg";
+import kitkatAd from "../../assets/images/home/kitkat.svg";
+import capAd from "../../assets/images/home/cap.svg";
 import styles from "./Home.module.scss";
 
 const nextRace = {
@@ -17,12 +20,26 @@ const nextRace = {
   },
 };
 
-const product = {
-  name: "태그호이어 커넥티드 칼리버 E5 x 포뮬러 1 에디션",
-  spec: "45 mm, 블랙 DLC 코팅 그레이드 2 티타늄",
-  img: watch,
-  url: "#",
-};
+const products = [
+  {
+    name: "태그호이어 커넥티드 칼리버 E5 x 포뮬러 1 에디션",
+    spec: "45 mm, 블랙 DLC 코팅 그레이드 2 티타늄",
+    img: watchAd,
+    url: "https://www.tagheuer.com/kr/ko/스마트-워치/컬렉션/태그호이어-커넥티드/45-mm/SBT8A85.EB0417.html",
+  },
+  {
+    name: "킷캣 F1 (10개입)",
+    spec: "Have a break, have a kitkat",
+    img: kitkatAd,
+    url: "https://brand.naver.com/nestlestore/products/13746101954",
+  },
+  {
+    name: "메르세데스 - AMG F1 팀 DNA 3-스트라이프 캡",
+    spec: "Mercedes AMG Petronas Formula One Team",
+    img: capAd,
+    url: "https://www.adidas.co.kr/메르세데스---amg-f1-팀-dna-3-스트라이프-캡/KS8851.html",
+  },
+];
 
 const posts = [
   { id: 1, board: "페라리 게시판", title: "게시글 제목", likes: 5 },
@@ -33,6 +50,10 @@ const posts = [
 const unread = 1;
 
 export default function Home() {
+    const [product] = useState(
+    () => products[Math.floor(Math.random() * products.length)],
+  );
+
   return (
     <div className={styles.home}>
       {/* 헤더 */}
@@ -71,15 +92,26 @@ export default function Home() {
             <p className={styles.remaining}>{nextRace.session.remaining}</p>
           </div>
         </section>
-
-        {/* 상품 */}
+        {/* 상품 광고 */}
         <section className={styles.productCard}>
-          <img src={product.img} alt={product.name} className={styles.productImg} />
+          <img
+            src={product.img}
+            alt={product.name}
+            className={styles.productImg}
+          />
+
           <div className={styles.productBody}>
             <p className={styles.productName}>{product.name}</p>
             <p className={styles.productSpec}>{product.spec}</p>
-            <a href={product.url} target="_blank" rel="noreferrer" className={styles.productLink}>
-              시계 구매하기
+
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.productLink}
+              aria-label={`${product.name} 구매하기 (새 탭에서 열림)`}
+            >
+              구매하기
             </a>
           </div>
         </section>
