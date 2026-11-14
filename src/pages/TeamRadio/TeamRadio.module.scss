@@ -179,6 +179,7 @@
 .userBoard span:last-child {
   margin-left: auto;
   font-size: 24px;
+  transform: translateX(-10px);
 }
 
 .liveCard {
@@ -984,7 +985,7 @@
         svg,
         svg path {
           fill: var(--brand-500);
-          stroke: #666;
+          stroke: var(--brand-600);
         }
       }
     }

@@ -230,14 +230,14 @@ function ReplyIcon() {
 function PostCounts({ post, className = '' }) {
   return (
     <span className={`${s.postCounts} ${className}`}>
-      <span className={s.countItem} aria-label={`댓글 ${post.commentCount}개`}>
-        <CommentIcon />
-        {post.commentCount}
-      </span>
-
       <span className={s.countItem} aria-label={`좋아요 ${post.likeCount}개`}>
         <HeartIcon />
         {post.likeCount}
+      </span>
+
+      <span className={s.countItem} aria-label={`댓글 ${post.commentCount}개`}>
+        <CommentIcon />
+        {post.commentCount}
       </span>
     </span>
   );
