@@ -1,7 +1,7 @@
 import {
   BrowserRouter,
-  Route,
   Routes,
+  Route,
   useMatch,
   useLocation,
 } from "react-router-dom";
@@ -25,19 +25,31 @@ function AppRoutes() {
   );
 
   const location = useLocation();
+  const params = new URLSearchParams(location.search);
+
+  const view = params.get("view") || "home";
+
+  const showShadow =
+    location.pathname === "/team-radio" &&
+    view !== "home";
 
   const garageEditing =
     location.pathname === "/my-garage" &&
-    new URLSearchParams(location.search).get("edit") === "1";
+    params.get("edit") === "1";
 
   const hideBottomNav =
     driverDetail || settlementDetail || garageEditing;
 
   return (
     <>
-      <main className="content">
+      <main
+        className={`content ${showShadow ? "pageShadow" : ""}`}
+      >
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={<Home />}
+          />
 
           {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
           <Route
