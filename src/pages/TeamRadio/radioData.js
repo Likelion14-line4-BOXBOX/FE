@@ -1,3 +1,5 @@
+import { TEAM_ROSTER } from '../../shared/teamRoster';
+
 // 퍼블리싱 확인용 데이터
 export const teams = [
   [
@@ -23,7 +25,13 @@ export const teams = [
   name,
   color,
   asset,
-  tags: ['전체', name, ...drivers],
+
+  tags: [
+    '전체',
+    name,
+    ...(TEAM_ROSTER.find((team) => team.name === name)?.drivers ??
+      drivers),
+  ],
 
   banner: `${asset}_배너.svg`,
 }));
@@ -56,7 +64,17 @@ export const races = [
     status: 'scheduled',
     remaining: '2일 3시간 40분',
     round: 19,
+
+    sessions: [
+      {
+        id: 'fp2',
+        name: '프리 프랙티스 2',
+        startsAt: '2026-10-31T07:00:00+09:00',
+        endsAt: '2026-10-31T08:00:00+09:00',
+      },
+    ],
   },
+
   { id: 'usa', title: '미국 그랑프리', status: 'closed', round: 18 },
   { id: 'singapore', title: '싱가포르 그랑프리', status: 'closed', round: 17 },
   { id: 'bahrain', title: '바레인 그랑프리', status: 'closed', round: 16 },
@@ -89,7 +107,16 @@ export const initialPosts = boards.flatMap((board) =>
     liked: false,
     saved: false,
     date: '10/30 12:14',
-    createdAt: Date.now() - (index + 1) * 86400000,
+    createdAt:
+    board.id === 'archive'
+      // 아카이브 샘플: 2025년, 2024년 글
+      ? Date.UTC(
+          index < 3 ? 2025 : 2024,
+          11,
+          2 - (index % 3),
+        )
+      // 일반 게시판 샘플
+      : Date.now() - (index + 1) * 86400000,
     images: [],
     comments: [
       {
@@ -102,8 +129,32 @@ export const initialPosts = boards.flatMap((board) =>
 );
 
 export const initialMessages = [
-  { id: 'a', text: '메세지메세지메세지메세지', mine: false },
-  { id: 'b', text: '메세지메세지메세지', mine: false },
-  { id: 'c', text: '메세지', mine: false },
-  { id: 'd', text: '내 메시지', mine: true },
+  {
+    id: 'a',
+    text: '메세지메세지메세지메세지',
+    mine: false,
+    sessionId: 'fp2',
+    createdAt: '2026-10-31T07:20:00+09:00',
+  },
+  {
+    id: 'b',
+    text: '메세지메세지메세지',
+    mine: false,
+    sessionId: 'fp2',
+    createdAt: '2026-10-31T07:21:00+09:00',
+  },
+  {
+    id: 'c',
+    text: '메세지',
+    mine: false,
+    sessionId: 'fp2',
+    createdAt: '2026-10-31T07:22:00+09:00',
+  },
+  {
+    id: 'd',
+    text: '내 메시지',
+    mine: true,
+    sessionId: 'fp2',
+    createdAt: '2026-10-31T07:23:00+09:00',
+  },
 ];

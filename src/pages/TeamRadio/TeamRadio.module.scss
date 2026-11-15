@@ -179,6 +179,7 @@
 .userBoard span:last-child {
   margin-left: auto;
   font-size: 24px;
+  transform: translateX(-10px);
 }
 
 .liveCard {
@@ -617,7 +618,10 @@
   justify-content: center;
   position: fixed;
   right: max(20px, calc((100vw - 402px) / 2 + 20px));
-  top: 723px;
+  top: auto;
+  bottom: calc(
+    100dvh - var(--app-height) + var(--bottom-nav-height) + 16px
+  );
   z-index: 20;
   width: 100px;
   height: 44px;
@@ -981,7 +985,7 @@
         svg,
         svg path {
           fill: var(--brand-500);
-          stroke: #666;
+          stroke: var(--brand-600);
         }
       }
     }
@@ -1194,11 +1198,17 @@
   background: #111;
   color: #fff;
   font-size: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .composer button:disabled {
   opacity: 0.45;
 }
+
 
 .replyNotice {
   margin-bottom: 8px;
@@ -1501,51 +1511,7 @@
   display: none;
 }
 
-.teamCard > .teamArtwork {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-}
 
-.teamCard .normalAsset,
-.teamCard .hoverAsset {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-.teamCard .normalAsset {
-  opacity: 1;
-}
-
-.teamCard .hoverAsset {
-  opacity: 0;
-}
-
-@media (hover: hover) {
-  .teamCard:hover .normalAsset {
-    opacity: 0;
-  }
-
-  .teamCard:hover .hoverAsset {
-    opacity: 1;
-  }
-}
-
-.teamCard:focus-visible .normalAsset,
-.teamCard:active .normalAsset {
-  opacity: 0;
-}
-
-.teamCard:focus-visible .hoverAsset,
-.teamCard:active .hoverAsset {
-  opacity: 1;
-}
 
 @media (max-width: 360px) {
   .userBoard {
@@ -2024,7 +1990,7 @@
     flex-shrink: 0;
     margin: -20px -20px 0;
     padding: 20px 16px 0;
-    min-height: 96px;
+    min-height: 75px;
     box-sizing: border-box;
     background: #fff;
 
@@ -2186,10 +2152,10 @@
 
   .composer button svg {
     display: block;
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 24px;
     margin: 0;
-    transform: translate(1px, -1px);
+    transform: none;
     stroke-width: 1.8;
   }
 }
@@ -2337,10 +2303,10 @@
 
 .reportSiren {
   display: block;
-  margin-bottom: 8px;
-  text-align: center;
-  font-size: 28px;
-  line-height: 32px;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  object-fit: contain;
 }
 
 .deleteDialog {
@@ -2372,3 +2338,231 @@
   }
 }
 
+
+.homeHeader,
+.page > .header,
+.page > .searchHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+}
+
+.homeHeader {
+  margin: -30px -20px 0;
+  padding: 30px 20px 12px;
+  background: #f5f5f6;
+}
+
+.page > .header,
+.page > .searchHeader {
+  height: auto;
+  min-height: 78px;
+  margin-top: -30px;
+  margin-inline: -20px;
+  padding: 20px 12px 10px;
+}
+
+.userBoard {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) 16px;
+}
+
+.userBoard span:last-child svg {
+  display: block;
+}
+
+
+.sortDropdown .sortArrow,
+.searchDropdown .sortArrow {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  transform: none;
+}
+
+.sortDropdown[open] .sortArrow {
+  transform: rotate(180deg);
+}
+
+.postPage,
+.writePage {
+  min-height: var(--app-height);
+}
+
+
+.dialog.imageDialog {
+  inset: 0 auto auto max(0px, calc((100vw - 402px) / 2));
+  display: grid;
+  place-items: center;
+  width: min(402px, 100vw);
+  height: var(--app-height);
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 40px 24px;
+  overflow: hidden;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.imageDialog::backdrop {
+  background: transparent;
+}
+
+.imageDialog .fullImage {
+  max-width: 100%;
+  max-height: calc(var(--app-height) - 80px);
+}
+
+
+
+@media (max-width: 360px) {
+  .userBoard {
+    grid-template-columns: 70px minmax(0, 1fr) 16px;
+  }
+
+  .homeHeader {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+
+  .page > .header,
+  .page > .searchHeader {
+    margin-inline: -16px;
+  }
+}
+
+.stack:has(> .userBoard) {
+  grid-template-columns: max-content minmax(0, 1fr) 16px;
+  column-gap: 14px;
+}
+
+.stack > .userBoard {
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.userBoard strong {
+  white-space: nowrap;
+}
+
+.userBoard > span:nth-child(2) {
+  min-width: 0;
+  white-space: nowrap;
+  font-size: clamp(10px, 3vw, 12px);
+  letter-spacing: -0.6px;
+}
+
+@media (max-width: 360px) {
+  .stack:has(> .userBoard) {
+    column-gap: 8px;
+  }
+}
+
+.messageMenu:not(.reportMenu) button:only-child,
+.messageMenu:not(.reportMenu) button + button {
+  color: var(--brand-500);
+}
+
+.imageViewer {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.imageDialog .imageModalClose {
+  top: -14px;
+  right: -14px;
+}
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  color: #8b8b8b;
+}
+
+.sessionDivider {
+  margin: 20px 0 20px;
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  height: 28px;
+  margin: 0;
+  padding: 0 16px;
+
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.day {
+  display: block;
+  margin: 12px 0 0;
+  color: #8B8B8B;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.messages {
+  padding-top: 0;
+}
+
+.messages .sessionDivider {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.messages .sessionDivider > .session {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.commentLoginButton {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 28px;
+  background: #f7f7f7;
+  color: #8b8b8b;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.chatPage .chatRoom.readOnlyChat {
+  padding-bottom: 0;
+}
+
+.chatPage .readOnlyChat .messages {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.chatPage .readOnlyChat .messages > div {
+  flex-shrink: 0;
+}
+
+.chatPage .readOnlyChat .chatEnded {
+  flex-shrink: 0;
+  margin: auto 0 0;
+  padding: 40px 0 28px;
+  color: #8b8b8b;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}

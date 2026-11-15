@@ -8,8 +8,9 @@ export const ALL_TAG = {
 
 export const REPORT_REASONS = [
   { value: 'ABUSE', label: '욕설, 비하' },
-  { value: 'SPAM', label: '상업적 광고·도배' },
+  { value: 'SPAM', label: '상업적 광고' },
   { value: 'INAPPROPRIATE', label: '선정적인 내용' },
+  { value: 'CLICKBAIT', label: '낚시, 도배' },
   { value: 'OTHER', label: '기타' },
 ];
 
@@ -64,7 +65,7 @@ export function mapPost(item, currentUserId) {
     ),
     canEdit: item.canEdit === true,
     canDelete: item.canDelete === true,
-    date: formatKoreanTime(item.createdAt),
+    date: formatChatTime(item.createdAt),
 
     // 댓글은 TR08에서 따로 조회해서 결합합니다.
     comments: [],
@@ -85,7 +86,7 @@ export function mapComment(item, currentUserId) {
       ),
     liked: item.likedByMe,
     nickname: item.author?.nickname ?? '',
-    date: formatKoreanTime(item.createdAt),
+    date: formatChatTime(item.createdAt),
   };
 }
 
@@ -280,4 +281,156 @@ export function findTeamBoard(boards, teamId) {
         item.teamId === teamId,
     ) ?? null
   );
+}
+export function threadComments(comments) {
+  const roots = comments.filter((item) => item.parentId == null);
+  const replies = new Map();
+  const rootIds = new Set(roots.map((item) => item.commentId));
+
+  for (const item of comments) {
+    if (item.parentId == null) continue;
+
+    const siblings = replies.get(item.parentId) ?? [];
+    siblings.push(item);
+    replies.set(item.parentId, siblings);
+  }
+
+  return [
+    ...roots.flatMap((item) => [
+      item,
+      ...(replies.get(item.commentId) ?? []),
+    ]),
+    ...comments.filter(
+      (item) => item.parentId != null && !rootIds.has(item.parentId),
+    ),
+  ];
+}
+export function koreanDayKey(value) {
+  const date = new Date(value);
+
+  if (!value || Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+export function formatKoreanDate(value) {
+  const date = new Date(value);
+
+  if (!value || Number.isNaN(date.getTime())) return '';
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(date);
+
+  const part = (type) =>
+    parts.find((item) => item.type === type)?.value;
+
+  return `${part('year')}년 ${part('month')}월 ${part('day')}일`;
+}
+
+export function formatPostDate(value, now = Date.now()) {
+  const date = new Date(value);
+  const current = new Date(now);
+
+  if (!value || Number.isNaN(date.getTime())) return '';
+
+  if (koreanDayKey(value) === koreanDayKey(now)) {
+    const minutes = Math.max(
+      0,
+      Math.floor((now - date.getTime()) / 60000),
+    );
+
+    if (minutes < 1) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+
+    return `${Math.floor(minutes / 60)}시간 전`;
+  }
+
+  const getYear = (target) =>
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+    }).format(target);
+
+  const sameYear = getYear(date) === getYear(current);
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    ...(sameYear ? {} : { year: 'numeric' }),
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(date);
+
+  const get = (type) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return sameYear
+    ? `${get('month')}월 ${get('day')}일`
+    : `${get('year')}년 ${get('month')}월 ${get('day')}일`;
+}
+
+export function formatChatTime(value) {
+  const date = new Date(value);
+
+  if (!value || Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
+}
+
+export function getMessageSession(message, race) {
+  const sessions = race.sessions ?? [];
+
+  // 서버에서 메시지에 sessionId를 내려주면 우선 사용합니다.
+  if (message.sessionId) {
+    const session = sessions.find(
+      (item) => item.id === message.sessionId,
+    );
+
+    if (session) return session;
+  }
+
+  // sessionId가 없으면 메시지 작성 시간을 경기 일정과 비교합니다.
+  const timestamp = Date.parse(message.createdAt);
+
+  return (
+    sessions.find(
+      (item) =>
+        timestamp >= Date.parse(item.startsAt) &&
+        timestamp < Date.parse(item.endsAt),
+    ) ?? null
+  );
+}
+
+export function formatSessionDate(value) {
+  const date = new Date(value);
+
+  if (!value || Number.isNaN(date.getTime())) return '';
+
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const get = (type) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return `${get('month')}.${get('day')} ${get('weekday')} ${get('hour')}:${get('minute')}`;
 }
