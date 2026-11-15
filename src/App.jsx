@@ -16,12 +16,6 @@ import MyGarage from "./pages/MyGarage/MyGarage";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
-<<<<<<< HEAD
-  const driverDetail = useMatch(
-    "/race-market/drivers/:driverId",
-  );
-
-=======
   const location = useLocation();
   const params = new URLSearchParams(location.search);
 
@@ -29,17 +23,10 @@ function AppRoutes() {
     "/race-market/drivers/:driverId",
   );
 
->>>>>>> 7686d87 (fix: 공통 화면 그림자 적용 및 실시간 채팅 제외)
   const settlementDetail = useMatch(
     "/race-market/settlements/:roundId",
   );
 
-<<<<<<< HEAD
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-
-  const view = params.get("view") || "home";
-=======
   const view = params.get("view") || "home";
 
   const isTeamRadio =
@@ -60,7 +47,7 @@ function AppRoutes() {
     radioFocused
   );
 
-  // 현재 샘플 데이터의 실시간 채팅방 ID: mexico
+  // 현재 샘플 데이터에서 실시간 채팅방 ID는 mexico입니다.
   const isLiveChat =
     isTeamRadio &&
     view === "chat" &&
@@ -68,7 +55,6 @@ function AppRoutes() {
       !params.get("race") ||
       params.get("race") === "mexico"
     );
->>>>>>> 7686d87 (fix: 공통 화면 그림자 적용 및 실시간 채팅 제외)
 
   const showShadow =
     !isLiveChat &&
@@ -76,13 +62,6 @@ function AppRoutes() {
       hideBottomNav ||
       (isTeamRadio && view !== "home")
     );
-
-  const garageEditing =
-    location.pathname === "/my-garage" &&
-    params.get("edit") === "1";
-
-  const hideBottomNav =
-    driverDetail || settlementDetail || garageEditing;
 
   return (
     <>
@@ -95,16 +74,10 @@ function AppRoutes() {
             element={<Home />}
           />
 
-<<<<<<< HEAD
           {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
           <Route
             path="/team-radio"
             element={<TeamRadio currentUser={MOCK_USER} />}
-=======
-          <Route
-            path="/team-radio"
-            element={<TeamRadio />}
->>>>>>> 7686d87 (fix: 공통 화면 그림자 적용 및 실시간 채팅 제외)
           />
 
           <Route
@@ -113,7 +86,6 @@ function AppRoutes() {
           />
 
           <Route
-<<<<<<< HEAD
             path="/race-market/drivers/:driverId"
             element={<RaceMarketBuySell />}
           />
@@ -124,8 +96,6 @@ function AppRoutes() {
           />
 
           <Route
-=======
->>>>>>> 7686d87 (fix: 공통 화면 그림자 적용 및 실시간 채팅 제외)
             path="/my-garage"
             element={<MyGarage />}
           />
