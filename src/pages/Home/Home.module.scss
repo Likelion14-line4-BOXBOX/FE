@@ -1,23 +1,7 @@
 $radius-lg: 16px;
 $radius-md: 12px;
 
-.productCard {
-  .productName,
-  .productSpec,
-  .productLink {
-    margin: 0;
-    line-height: 1.2;
-  }
 
-  .productSpec {
-    margin-top: 4px;
-  }
-
-  .productLink {
-    display: block;
-    margin-top: 4px;
-  }
-}
 
 .home {
   min-height: 100%;
@@ -196,53 +180,67 @@ $radius-md: 12px;
   }
 }
 
-// 상품 카드
 .productCard {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 15px 12px 17px;
+  gap: 10px;
+
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 92px;
+  padding: 15px 12px;
+
   background: #fff;
-  width: 362px;
-  height: 92px;
-
-
-  box-shadow: 0px 0px 10px rgba(3, 3, 3, 0.03), 0px 0px 40px rgba(3, 3, 3, 0.05);
   border-radius: 18px;
+  box-shadow:
+    0 0 10px rgba(3, 3, 3, 0.03),
+    0 0 40px rgba(3, 3, 3, 0.05);
+}
 
+.productImg {
+  display: block;
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
 
-  .productImg {
-    width: 60px;
-    height: 60px;
-    flex-shrink: 0;
-    display: block;
-    object-fit: contain;
-  }
+.productBody {
+  flex: 1;
+  min-width: 0;
+}
 
-  .productBody {
-    flex: 1;
-    min-width: 0; 
-  }
+.productName {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
-  .productName {
-    font-size: 15px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
 
-  .productSpec {
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.7);
-  }
+.productSpec {
+  margin: 4px 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
-  .productLink {
-    display: inline-block;
-    font-size: 14px;
-    color: black;
-    text-decoration: underline;
-  }
+  font-size: 12px;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.productLink {
+  display: inline-block;
+  margin-top: 4px;
+
+  font-size: 14px;
+  line-height: 1.2;
+  color: #000;
+  text-decoration: underline;
 }
 
 // TEAM RADIO
