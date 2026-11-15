@@ -51,3 +51,15 @@ select {
     0px 0px 10px rgba(3, 3, 3, 0.06),
     0px 0px 40px rgba(3, 3, 3, 0.08);
 }
+
+/* 기존 content 그림자는 제거 */
+.content.pageShadow {
+  box-shadow: none;
+}
+
+/* 팀 라디오 하위 화면일 때 앱 바깥에 그림자 적용 */
+#root:has(.content.pageShadow) {
+  box-shadow:
+    0px 0px 10px rgba(3, 3, 3, 0.06),
+    0px 0px 40px rgba(3, 3, 3, 0.08);
+}
