@@ -13,10 +13,11 @@ import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
+import MyRadio from "./pages/MyGarage/MyRadio";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
-  // 비회원 테스트: null / 회원 테스트: MOCK_USER
+  // 회원 테스트: MOCK_USER / 비회원 테스트: null
   const currentUser = MOCK_USER;
 
   const location = useLocation();
@@ -43,14 +44,17 @@ function AppRoutes() {
     location.pathname === "/my-garage" &&
     params.get("edit") === "1";
 
+  const garageRadio =
+    location.pathname === "/my-garage/radio";
+
   const hideBottomNav = Boolean(
     driverDetail ||
     settlementDetail ||
     garageEditing ||
+    garageRadio ||
     radioFocused
   );
 
-  // 현재 샘플 데이터의 실시간 채팅방 ID
   const isLiveChat =
     isTeamRadio &&
     view === "chat" &&
@@ -74,16 +78,12 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Home currentUser={currentUser} />
-            }
+            element={<Home currentUser={currentUser} />}
           />
 
           <Route
             path="/team-radio"
-            element={
-              <TeamRadio currentUser={currentUser} />
-            }
+            element={<TeamRadio currentUser={currentUser} />}
           />
 
           <Route
@@ -102,8 +102,13 @@ function AppRoutes() {
           />
 
           <Route
+            path="/my-garage/radio"
+            element={<MyRadio currentUser={currentUser} />}
+          />
+
+          <Route
             path="/my-garage"
-            element={<MyGarage />}
+            element={<MyGarage currentUser={currentUser} />}
           />
         </Routes>
       </main>

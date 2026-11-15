@@ -5,9 +5,18 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+
+import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
 import styles from "./MyGarage.module.scss";
 import garageLogo from "../../assets/images/mygarage/My Garage.svg";
+import {
+  getGarageProfile,
+  saveGarageProfile,
+} from "../../shared/garageProfile";
 
 const imageModules = import.meta.glob(
   "../../assets/images/mygarage/**/*.svg",
@@ -393,14 +402,19 @@ function SelectionSheet({
   );
 }
 
-export default function MyGarage() {
+export default function MyGarage({
+  currentUser = null,
+  onLogin,
+}) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] =
     useSearchParams();
 
   const editing = searchParams.get("edit") === "1";
 
-  const [profile, setProfile] = useState(loadInitialProfile);
+  const [profile, setProfile] = useState(getGarageProfile);
   const [draft, setDraft] = useState(() => ({ ...profile }));
+
 
   const [sheet, setSheet] = useState(null);
   const [pendingTeam, setPendingTeam] = useState(null);
@@ -490,32 +504,23 @@ export default function MyGarage() {
       return;
     }
 
-    // 저장 버튼을 눌렀을 때만 팀·선수 저장
+    const nextProfile = {
+      ...draft,
+      nickname,
+    };
+
     try {
-      localStorage.setItem(
-        FAVORITES_STORAGE_KEY,
-        JSON.stringify({
-          team: draft.team,
-          driver: draft.driver,
-        }),
-      );
+      // 팀 라디오에서도 읽는 공통 저장소에 저장
+      saveGarageProfile(nextProfile);
     } catch {
       setError(
-        "선택한 팀과 선수를 저장하지 못했습니다. 다시 시도해 주세요.",
+        "프로필을 저장하지 못했어요. 브라우저 저장 공간을 확인해주세요.",
       );
       return;
     }
 
-    setProfile({
-      ...draft,
-      nickname,
-    });
-
-    setDraft((previous) => ({
-      ...previous,
-      nickname,
-    }));
-
+    setProfile(nextProfile);
+    setDraft(nextProfile);
     setError("");
     setEditing(false);
   }
@@ -572,6 +577,16 @@ export default function MyGarage() {
 
     setPendingTeam(null);
     setSheet(null);
+  }
+
+  if (!currentUser?.userId) {
+    return (
+      <LoginGuide
+        logoSrc={garageLogo}
+        logoAlt="My Garage"
+        onLogin={onLogin}
+      />
+    );
   }
 
   return (
@@ -721,9 +736,12 @@ export default function MyGarage() {
 
       {!editing && (
         <div className={styles.profileActions}>
-          <button type="button">
-            메시지 목록
-          </button>
+        <button
+          type="button"
+          onClick={() => navigate("/my-garage/radio")}
+        >
+          마이 라디오
+        </button>
 
           <button
             type="button"
