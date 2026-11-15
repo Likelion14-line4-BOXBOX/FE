@@ -104,6 +104,33 @@ const INITIAL_PROFILE = {
   avatarSrc: "",
 };
 
+// 마지막으로 저장한 팀·선수 불러오기
+const FAVORITES_STORAGE_KEY = "boxbox-my-garage-favorites";
+
+function loadInitialProfile() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null",
+    );
+
+    const team = TEAMS.find(
+      (item) => item.name === saved?.team,
+    );
+
+    if (!team || !team.drivers.includes(saved?.driver)) {
+      return { ...INITIAL_PROFILE };
+    }
+
+    return {
+      ...INITIAL_PROFILE,
+      team: saved.team,
+      driver: saved.driver,
+    };
+  } catch {
+    return { ...INITIAL_PROFILE };
+  }
+}
+
 const MARKET = {
   totalAssets: 100000,
   returnRate: 2.5,
@@ -372,12 +399,8 @@ export default function MyGarage() {
 
   const editing = searchParams.get("edit") === "1";
 
-  const [profile, setProfile] = useState({
-    ...INITIAL_PROFILE,
-  });
-  const [draft, setDraft] = useState({
-    ...INITIAL_PROFILE,
-  });
+  const [profile, setProfile] = useState(loadInitialProfile);
+  const [draft, setDraft] = useState(() => ({ ...profile }));
 
   const [sheet, setSheet] = useState(null);
   const [pendingTeam, setPendingTeam] = useState(null);
@@ -464,6 +487,22 @@ export default function MyGarage() {
 
     if (nickname.length < 2 || nickname.length > 20) {
       setError("이름은 2~20자로 입력해 주세요.");
+      return;
+    }
+
+    // 저장 버튼을 눌렀을 때만 팀·선수 저장
+    try {
+      localStorage.setItem(
+        FAVORITES_STORAGE_KEY,
+        JSON.stringify({
+          team: draft.team,
+          driver: draft.driver,
+        }),
+      );
+    } catch {
+      setError(
+        "선택한 팀과 선수를 저장하지 못했습니다. 다시 시도해 주세요.",
+      );
       return;
     }
 
@@ -711,12 +750,11 @@ export default function MyGarage() {
         />
       </div>
 
-        <section
-          className={`${styles.marketCard} ${
-            !current.showAssets ? styles.privateMarketCard : ""
-          }`}
-        >
-
+      <section
+        className={`${styles.marketCard} ${
+          !current.showAssets ? styles.privateMarketCard : ""
+        }`}
+      >
         <div className={styles.marketHeader}>
           <h2>MY RACE CARK</h2>
 
