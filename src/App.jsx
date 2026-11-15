@@ -16,6 +16,9 @@ import MyGarage from "./pages/MyGarage/MyGarage";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+
   const driverDetail = useMatch(
     "/race-market/drivers/:driverId",
   );
@@ -24,21 +27,41 @@ function AppRoutes() {
     "/race-market/settlements/:roundId",
   );
 
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-
   const view = params.get("view") || "home";
 
-  const showShadow =
-    location.pathname === "/team-radio" &&
-    view !== "home";
+  const isTeamRadio =
+    location.pathname === "/team-radio";
+
+  const radioFocused =
+    isTeamRadio &&
+    ["post", "write", "search", "chat"].includes(view);
 
   const garageEditing =
     location.pathname === "/my-garage" &&
     params.get("edit") === "1";
 
-  const hideBottomNav =
-    driverDetail || settlementDetail || garageEditing;
+  const hideBottomNav = Boolean(
+    driverDetail ||
+    settlementDetail ||
+    garageEditing ||
+    radioFocused
+  );
+
+  // 현재 샘플 데이터에서 실시간 채팅방 ID는 mexico입니다.
+  const isLiveChat =
+    isTeamRadio &&
+    view === "chat" &&
+    (
+      !params.get("race") ||
+      params.get("race") === "mexico"
+    );
+
+  const showShadow =
+    !isLiveChat &&
+    (
+      hideBottomNav ||
+      (isTeamRadio && view !== "home")
+    );
 
   return (
     <>
