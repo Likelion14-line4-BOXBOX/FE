@@ -13,9 +13,13 @@ import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
+import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
-  const driverDetail = useMatch("/race-market/drivers/:driverId");
+  const driverDetail = useMatch(
+    "/race-market/drivers/:driverId",
+  );
+
   const settlementDetail = useMatch(
     "/race-market/settlements/:roundId",
   );
@@ -35,9 +39,16 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<Home />} />
 
-          <Route path="/team-radio" element={<TeamRadio />} />
+          {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
+          <Route
+            path="/team-radio"
+            element={<TeamRadio currentUser={MOCK_USER} />}
+          />
 
-          <Route path="/race-market" element={<RaceMarket />} />
+          <Route
+            path="/race-market"
+            element={<RaceMarket />}
+          />
 
           <Route
             path="/race-market/drivers/:driverId"
@@ -49,7 +60,10 @@ function AppRoutes() {
             element={<RaceMarketSettlement />}
           />
 
-          <Route path="/my-garage" element={<MyGarage />} />
+          <Route
+            path="/my-garage"
+            element={<MyGarage />}
+          />
         </Routes>
       </main>
 
