@@ -13,6 +13,7 @@ import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
+import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
   const driverDetail = useMatch(
@@ -50,9 +51,10 @@ function AppRoutes() {
             element={<Home />}
           />
 
+          {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
           <Route
             path="/team-radio"
-            element={<TeamRadio />}
+            element={<TeamRadio currentUser={MOCK_USER} />}
           />
 
           <Route
