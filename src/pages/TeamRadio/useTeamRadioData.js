@@ -585,14 +585,15 @@ export default function useTeamRadioData({
 
   function getMessages(roomId) {
     const fallback = initialMessages.map((item) => ({
-      messageId: String(item.id),
-      clientMessageId: String(item.id),
-      roomId,
-      sender: profile(item.mine, item.author),
-      content: item.text,
-      createdAt: iso(item.createdAt),
-      isDeleted: false,
-      canDelete: Boolean(item.mine),
+    messageId: String(item.id),
+    clientMessageId: String(item.id),
+    roomId,
+    sender: profile(item.mine, item.author),
+    content: item.text,
+    createdAt: iso(item.createdAt),
+    sessionId: item.sessionId ?? null,
+    isDeleted: false,
+    canDelete: Boolean(item.mine),
     }));
 
     return (messageDtos[roomId] ?? fallback).map(
