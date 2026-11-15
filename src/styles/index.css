@@ -28,6 +28,11 @@ select {
   flex-direction: column;
   overflow: hidden;
   background: #fff;
+
+  position: relative;
+  isolation: isolate;
+  --app-height: min(874px, 100svh);
+  --bottom-nav-height: 88px;
 }
 
 .content {

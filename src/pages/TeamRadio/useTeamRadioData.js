@@ -6,8 +6,10 @@ import {
   initialPosts,
   initialMessages,
 } from './radioData';
+
 import {
   ALL_TAG,
+  threadComments,
   mapPost,
   mapComment,
   mapMessage,
@@ -199,7 +201,7 @@ export default function useTeamRadioData({
       userId,
     );
 
-    view.comments = (commentDtos[dto.postId] ?? []).map(
+    view.comments = threadComments(commentDtos[dto.postId] ?? []).map(
       (item) =>
         mapComment(
           {
