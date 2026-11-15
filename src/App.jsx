@@ -1,30 +1,73 @@
-import { BrowserRouter, Route, Routes, useMatch } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useMatch,
+  useLocation,
+} from "react-router-dom";
+
 import BottomNav from "./components/common/BottomNav/BottomNav";
 import Home from "./pages/Home/Home";
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
 import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
+import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
-  const driverDetail = useMatch("/race-market/drivers/:driverId");
+  const driverDetail = useMatch(
+    "/race-market/drivers/:driverId",
+  );
+
+  const settlementDetail = useMatch(
+    "/race-market/settlements/:roundId",
+  );
+
+  const location = useLocation();
+
+  const garageEditing =
+    location.pathname === "/my-garage" &&
+    new URLSearchParams(location.search).get("edit") === "1";
+
+  const hideBottomNav =
+    driverDetail || settlementDetail || garageEditing;
 
   return (
     <>
       <main className="content">
         <Routes>
           <Route path="/" element={<Home />} />
+
+          {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
           <Route
             path="/team-radio"
-            element={<TeamRadio currentUser={MOCK_USER} />} //비로그인: null , 로그인: MOCK_USER
+            element={<TeamRadio currentUser={MOCK_USER} />}
           />
-          <Route path="/race-market" element={<RaceMarket />} />
-          <Route path="/race-market/drivers/:driverId" element={<RaceMarketBuySell />} />
-          <Route path="/my-garage" element={<MyGarage />} />
+
+          <Route
+            path="/race-market"
+            element={<RaceMarket />}
+          />
+
+          <Route
+            path="/race-market/drivers/:driverId"
+            element={<RaceMarketBuySell />}
+          />
+
+          <Route
+            path="/race-market/settlements/:roundId"
+            element={<RaceMarketSettlement />}
+          />
+
+          <Route
+            path="/my-garage"
+            element={<MyGarage />}
+          />
         </Routes>
       </main>
-      {!driverDetail && <BottomNav />}
+
+      {!hideBottomNav && <BottomNav />}
     </>
   );
 }
