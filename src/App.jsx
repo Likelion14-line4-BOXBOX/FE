@@ -18,7 +18,7 @@ import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
   // 회원 테스트: MOCK_USER / 비회원 테스트: null
-  const currentUser = MOCK_USER;
+  const currentUser = null;
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -47,13 +47,21 @@ function AppRoutes() {
   const garageRadio =
     location.pathname === "/my-garage/radio";
 
-  const hideBottomNav = Boolean(
-    driverDetail ||
-    settlementDetail ||
-    garageEditing ||
-    garageRadio ||
-    radioFocused
-  );
+  const isLoginGuide =
+    !currentUser?.userId &&
+    ["/my-garage", "/my-garage/radio"].includes(
+      location.pathname,
+    );
+
+  const hideBottomNav =
+    !isLoginGuide &&
+    Boolean(
+      driverDetail ||
+      settlementDetail ||
+      garageEditing ||
+      garageRadio ||
+      radioFocused
+    );
 
   const isLiveChat =
     isTeamRadio &&
