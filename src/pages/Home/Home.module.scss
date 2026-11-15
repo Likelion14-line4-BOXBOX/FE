@@ -343,3 +343,22 @@ $radius-md: 12px;
     }
   }
 }
+.postLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.postLink:focus-visible {
+  outline: 2px solid var(--brand-500, #d00000);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.notice,
+.empty {
+  margin: 0;
+  padding: 12px 20px;
+  color: #8b8b8b;
+  font-size: 13px;
+}

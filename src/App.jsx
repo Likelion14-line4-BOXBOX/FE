@@ -16,6 +16,9 @@ import MyGarage from "./pages/MyGarage/MyGarage";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
+  // 비회원 테스트: null / 회원 테스트: MOCK_USER
+  const currentUser = MOCK_USER;
+
   const location = useLocation();
   const params = new URLSearchParams(location.search);
 
@@ -47,7 +50,7 @@ function AppRoutes() {
     radioFocused
   );
 
-  // 현재 샘플 데이터에서 실시간 채팅방 ID는 mexico입니다.
+  // 현재 샘플 데이터의 실시간 채팅방 ID
   const isLiveChat =
     isTeamRadio &&
     view === "chat" &&
@@ -71,13 +74,16 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/"
-            element={<Home />}
+            element={
+              <Home currentUser={currentUser} />
+            }
           />
 
-          {/* 비로그인 테스트: null / 로그인 테스트: MOCK_USER */}
           <Route
             path="/team-radio"
-            element={<TeamRadio currentUser={MOCK_USER} />}
+            element={
+              <TeamRadio currentUser={currentUser} />
+            }
           />
 
           <Route

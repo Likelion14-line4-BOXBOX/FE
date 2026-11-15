@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import {
   boards as initialBoards,
   teams,
@@ -148,18 +148,60 @@ function makeComment(item, postId) {
     updatedAt: iso(item.createdAt),
   };
 }
+// 홈과 팀 라디오에서 공유하는 게시글 상태입니다.
+// 현재는 목업이므로 새로고침하면 초기 데이터로 돌아갑니다.
+let postSnapshot;
+const postListeners = new Set();
 
+function getPostSnapshot() {
+  if (!postSnapshot) {
+    const boards = makeBoards();
+
+    postSnapshot = initialPosts.map((item) =>
+      makePost(item, boards),
+    );
+  }
+
+  return postSnapshot;
+}
+
+function subscribePosts(listener) {
+  postListeners.add(listener);
+
+  return () => {
+    postListeners.delete(listener);
+  };
+}
+
+function setPostSnapshot(update) {
+  const previous = getPostSnapshot();
+
+  const next =
+    typeof update === 'function'
+      ? update(previous)
+      : update;
+
+  if (Object.is(previous, next)) return;
+
+  postSnapshot = next;
+
+  postListeners.forEach((listener) => {
+    listener();
+  });
+}
 export default function useTeamRadioData({
   currentUser = MOCK_USER,
   liveStatus = 'open',
 } = {}) {
   const [boardSettings] = useState(makeBoards);
 
-  const [postDtos, setPostDtos] = useState(() =>
-    initialPosts.map((item) =>
-      makePost(item, boardSettings),
-    ),
-  );
+    const postDtos = useSyncExternalStore(
+    subscribePosts,
+    getPostSnapshot,
+    getPostSnapshot,
+    );
+
+    const setPostDtos = setPostSnapshot;
 
   const [commentDtos, setCommentDtos] = useState(() =>
     Object.fromEntries(
