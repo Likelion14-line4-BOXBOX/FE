@@ -2,81 +2,89 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  useMatch,
   useLocation,
+  useMatch,
 } from "react-router-dom";
 
 import BottomNav from "./components/common/BottomNav/BottomNav";
+
 import Home from "./pages/Home/Home";
 import Messages from "./pages/Home/Messages";
+
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
-import RaceMarket from "./pages/RaceMarket/RaceMarket";
-import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
-import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
-import MyGarage from "./pages/MyGarage/MyGarage";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
+import RaceMarket from "./pages/RaceMarket/RaceMarket";
+import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
+import { RaceMarketUserProfile } from "./pages/RaceMarket/RaceMarketRanking";
+import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
+
+import MyGarage from "./pages/MyGarage/MyGarage";
+import MyRadio from "./pages/MyGarage/MyRadio";
+
+const RADIO_FOCUSED_VIEWS = ["post", "write", "search", "chat"];
+
+const GARAGE_PATHS = [
+  "/my-garage",
+  "/my-garage/radio",
+];
+
 function AppRoutes() {
-  // 회원 테스트: MOCK_USER / 비회원 테스트: null
+  // 회원 테스트 시 null을 MOCK_USER로 변경하세요.
   const currentUser = MOCK_USER;
 
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
+  const { pathname, search } = useLocation();
+  const params = new URLSearchParams(search);
   const view = params.get("view") || "home";
 
-  const driverDetail = useMatch(
-    "/race-market/drivers/:driverId",
-  );
+  const driverDetail = useMatch("/race-market/drivers/:driverId");
+  const settlementDetail = useMatch("/race-market/settlements/:roundId");
+  const rankingProfile = useMatch("/race-market/users/:userId");
 
-  const settlementDetail = useMatch(
-    "/race-market/settlements/:roundId",
-  );
+  const isAuthenticated = Boolean(currentUser?.userId);
+  const isTeamRadio = pathname === "/team-radio";
+  const isMessages = pathname === "/messages";
+  const isGarageRadio = pathname === "/my-garage/radio";
 
-  const isTeamRadio =
-    location.pathname === "/team-radio";
-
-  const isMessages =
-    location.pathname === "/messages";
-
-  const radioFocused =
-    isTeamRadio &&
-    ["post", "write", "search", "chat"].includes(view);
-
-  const garageEditing =
-    location.pathname === "/my-garage" &&
+  const isGarageEditing =
+    pathname === "/my-garage" &&
     params.get("edit") === "1";
 
   const isGarageLoginGuide =
-    location.pathname === "/my-garage" &&
-    !currentUser?.userId;
+    !isAuthenticated &&
+    GARAGE_PATHS.includes(pathname);
 
-  const hideBottomNav = Boolean(
-    isMessages ||
+  const isRadioFocused =
+    isTeamRadio &&
+    RADIO_FOCUSED_VIEWS.includes(view);
+
+  const isMarketDetail = Boolean(
     driverDetail ||
     settlementDetail ||
-    (garageEditing && !isGarageLoginGuide) ||
-    radioFocused
+    rankingProfile,
   );
+
+  const hideBottomNav =
+    isMessages ||
+    isMarketDetail ||
+    isRadioFocused ||
+    (!isGarageLoginGuide && (isGarageEditing || isGarageRadio));
+
+  const race = params.get("race");
 
   const isLiveChat =
     isTeamRadio &&
     view === "chat" &&
-    (
-      !params.get("race") ||
-      params.get("race") === "mexico"
-    );
+    (!race || race === "mexico");
 
   const showShadow =
     !isLiveChat &&
-    (
-      hideBottomNav ||
-      (isTeamRadio && view !== "home")
-    );
+    (hideBottomNav || (isTeamRadio && view !== "home"));
 
   return (
     <>
       <main
-        className={`content ${showShadow ? "pageShadow" : ""}`}
+        className={`content${showShadow ? " pageShadow" : ""}`}
       >
         <Routes>
           <Route
@@ -105,6 +113,11 @@ function AppRoutes() {
           />
 
           <Route
+            path="/race-market/users/:userId"
+            element={<RaceMarketUserProfile />}
+          />
+
+          <Route
             path="/race-market/settlements/:roundId"
             element={<RaceMarketSettlement />}
           />
@@ -112,6 +125,11 @@ function AppRoutes() {
           <Route
             path="/my-garage"
             element={<MyGarage currentUser={currentUser} />}
+          />
+
+          <Route
+            path="/my-garage/radio"
+            element={<MyRadio currentUser={currentUser} />}
           />
         </Routes>
       </main>

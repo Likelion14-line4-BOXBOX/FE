@@ -5,9 +5,18 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+
+import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
 import styles from "./MyGarage.module.scss";
 import garageLogo from "../../assets/images/mygarage/My Garage.svg";
+import {
+  getGarageProfile,
+  saveGarageProfile,
+} from "../../shared/garageProfile";
 
 const imageModules = import.meta.glob(
   "../../assets/images/mygarage/**/*.svg",
@@ -104,6 +113,33 @@ const INITIAL_PROFILE = {
   avatarSrc: "",
 };
 
+// 마지막으로 저장한 팀·선수 불러오기
+const FAVORITES_STORAGE_KEY = "boxbox-my-garage-favorites";
+
+function loadInitialProfile() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null",
+    );
+
+    const team = TEAMS.find(
+      (item) => item.name === saved?.team,
+    );
+
+    if (!team || !team.drivers.includes(saved?.driver)) {
+      return { ...INITIAL_PROFILE };
+    }
+
+    return {
+      ...INITIAL_PROFILE,
+      team: saved.team,
+      driver: saved.driver,
+    };
+  } catch {
+    return { ...INITIAL_PROFILE };
+  }
+}
+
 const MARKET = {
   totalAssets: 100000,
   returnRate: 2.5,
@@ -133,18 +169,18 @@ function GarageImage({ src, alt, className = "" }) {
   );
 }
 
-function FavoriteCard({
+export function FavoriteCard({
   type,
   name,
-  editing,
+  editing = false,
   onChange,
+  rank: suppliedRank,
 }) {
   const isTeam = type === "team";
-
-  // 현재 화면용 하드코딩 순위
-  const rank = isTeam
+  const defaultRank = isTeam
     ? { 페라리: 2 }[name]
     : { "루이스 해밀턴": 4 }[name];
+  const rank = suppliedRank ?? defaultRank;
 
   if (!editing) {
     return (
@@ -366,18 +402,19 @@ function SelectionSheet({
   );
 }
 
-export default function MyGarage() {
+export default function MyGarage({
+  currentUser = null,
+  onLogin,
+}) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] =
     useSearchParams();
 
   const editing = searchParams.get("edit") === "1";
 
-  const [profile, setProfile] = useState({
-    ...INITIAL_PROFILE,
-  });
-  const [draft, setDraft] = useState({
-    ...INITIAL_PROFILE,
-  });
+  const [profile, setProfile] = useState(getGarageProfile);
+  const [draft, setDraft] = useState(() => ({ ...profile }));
+
 
   const [sheet, setSheet] = useState(null);
   const [pendingTeam, setPendingTeam] = useState(null);
@@ -467,16 +504,23 @@ export default function MyGarage() {
       return;
     }
 
-    setProfile({
+    const nextProfile = {
       ...draft,
       nickname,
-    });
+    };
 
-    setDraft((previous) => ({
-      ...previous,
-      nickname,
-    }));
+    try {
+      // 팀 라디오에서도 읽는 공통 저장소에 저장
+      saveGarageProfile(nextProfile);
+    } catch {
+      setError(
+        "프로필을 저장하지 못했어요. 브라우저 저장 공간을 확인해주세요.",
+      );
+      return;
+    }
 
+    setProfile(nextProfile);
+    setDraft(nextProfile);
     setError("");
     setEditing(false);
   }
@@ -533,6 +577,16 @@ export default function MyGarage() {
 
     setPendingTeam(null);
     setSheet(null);
+  }
+
+  if (!currentUser?.userId) {
+    return (
+      <LoginGuide
+        logoSrc={garageLogo}
+        logoAlt="My Garage"
+        onLogin={onLogin}
+      />
+    );
   }
 
   return (
@@ -682,9 +736,12 @@ export default function MyGarage() {
 
       {!editing && (
         <div className={styles.profileActions}>
-          <button type="button">
-            메시지 목록
-          </button>
+        <button
+          type="button"
+          onClick={() => navigate("/my-garage/radio")}
+        >
+          마이 라디오
+        </button>
 
           <button
             type="button"
@@ -711,14 +768,13 @@ export default function MyGarage() {
         />
       </div>
 
-        <section
-          className={`${styles.marketCard} ${
-            !current.showAssets ? styles.privateMarketCard : ""
-          }`}
-        >
-
+      <section
+        className={`${styles.marketCard} ${
+          !current.showAssets ? styles.privateMarketCard : ""
+        }`}
+      >
         <div className={styles.marketHeader}>
-          <h2>MY RACE CARK</h2>
+          <h2>MY RACE CART</h2>
 
           {editing && (
             <div className={styles.privacy}>
