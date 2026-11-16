@@ -169,18 +169,18 @@ function GarageImage({ src, alt, className = "" }) {
   );
 }
 
-function FavoriteCard({
+export function FavoriteCard({
   type,
   name,
-  editing,
+  editing = false,
   onChange,
+  rank: suppliedRank,
 }) {
   const isTeam = type === "team";
-
-  // 현재 화면용 하드코딩 순위
-  const rank = isTeam
+  const defaultRank = isTeam
     ? { 페라리: 2 }[name]
     : { "루이스 해밀턴": 4 }[name];
+  const rank = suppliedRank ?? defaultRank;
 
   if (!editing) {
     return (

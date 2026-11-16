@@ -11,6 +11,7 @@ import Home from "./pages/Home/Home";
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
 import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
+import { RaceMarketUserProfile } from "./pages/RaceMarket/RaceMarketRanking";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
 import MyRadio from "./pages/MyGarage/MyRadio";
@@ -31,6 +32,8 @@ function AppRoutes() {
     "/race-market/settlements/:roundId",
   );
 
+  const rankingProfile = useMatch("/race-market/users/:userId");
+  
   const view = params.get("view") || "home";
 
   const isTeamRadio =
@@ -58,6 +61,7 @@ function AppRoutes() {
     Boolean(
       driverDetail ||
       settlementDetail ||
+      rankingProfile ||
       garageEditing ||
       garageRadio ||
       radioFocused
@@ -102,6 +106,11 @@ function AppRoutes() {
           <Route
             path="/race-market/drivers/:driverId"
             element={<RaceMarketBuySell />}
+          />
+
+          <Route
+            path="/race-market/users/:userId"
+            element={<RaceMarketUserProfile />}
           />
 
           <Route

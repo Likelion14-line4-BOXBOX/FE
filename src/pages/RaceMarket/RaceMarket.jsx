@@ -4,6 +4,7 @@ import increaseIcon from "../../assets/images/racemarket/red-increase.svg";
 import styles from "./RaceMarket.module.scss";
 import { drivers, getMockPrice } from "./raceMarketMock";
 import { RaceMarketMy } from "./RaceMarketMy";
+import { RaceMarketRanking } from "./RaceMarketRanking";
 
 const round = {
   number: 19,
@@ -17,6 +18,11 @@ export default function RaceMarket() {
   const [searchParams] = useSearchParams();
   const isClosed = searchParams.get("preview") === "closed";
   const isMyTab = searchParams.get("tab") === "my";
+  const isRankingTab = searchParams.get("tab") === "ranking";
+  const isDriverTab = !isMyTab && !isRankingTab;
+  const rankingTabUrl = isClosed
+    ? "/race-market?tab=ranking&preview=closed"
+    : "/race-market?tab=ranking";
   const driverTabUrl = isClosed ? "/race-market?preview=closed" : "/race-market";
   const myTabUrl = isClosed
     ? "/race-market?tab=my&preview=closed"
@@ -29,13 +35,19 @@ export default function RaceMarket() {
         <div className={styles.tabs} aria-label="레이스마켓 메뉴">
           <Link
             to={driverTabUrl}
-            className={isMyTab ? undefined : styles.activeTab}
-            aria-current={isMyTab ? undefined : "page"}
+            className={isDriverTab ? styles.activeTab : undefined}
+            aria-current={isDriverTab ? "page" : undefined}
           >
             {isClosed ? "드라이버 랭킹" : "드라이버"}
           </Link>
 
-          <button type="button" disabled>유저 랭킹</button>
+          <Link
+            to={rankingTabUrl}
+            className={isRankingTab ? styles.activeTab : undefined}
+            aria-current={isRankingTab ? "page" : undefined}
+          >
+            유저 랭킹
+          </Link>
 
           <Link
             to={myTabUrl}
@@ -50,6 +62,8 @@ export default function RaceMarket() {
       <div className={styles.content}>
         {isMyTab ? (
           <RaceMarketMy isClosed={isClosed} />
+        ) : isRankingTab ? (
+          <RaceMarketRanking />
         ) : (
           <>
         <section
