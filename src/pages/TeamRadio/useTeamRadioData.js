@@ -119,7 +119,10 @@ function makePost(item, boards) {
     createdAt,
     updatedAt: createdAt,
     likedByMe: item.liked ?? false,
+    likedUserIds: item.liked ? [MOCK_USER.userId] : [],
+
     bookmarkedByMe: item.saved ?? false,
+    bookmarkedUserIds: item.saved ? [MOCK_USER.userId] : [],
     media: (item.images ?? []).map((url, index) => ({
       mediaId: `mock-${item.id}-media-${index}`,
       url,
@@ -189,6 +192,49 @@ function setPostSnapshot(update) {
     listener();
   });
 }
+let commentSnapshot;
+const commentListeners = new Set();
+
+function getCommentSnapshot() {
+  if (!commentSnapshot) {
+    commentSnapshot = Object.fromEntries(
+      initialPosts.map((item) => [
+        String(item.id),
+        (item.comments ?? []).map((entry) =>
+          makeComment(entry, String(item.id)),
+        ),
+      ]),
+    );
+  }
+
+  return commentSnapshot;
+}
+
+function subscribeComments(listener) {
+  commentListeners.add(listener);
+
+  return () => {
+    commentListeners.delete(listener);
+  };
+}
+
+function setCommentSnapshot(update) {
+  const previous = getCommentSnapshot();
+
+  const next =
+    typeof update === 'function'
+      ? update(previous)
+      : update;
+
+  if (Object.is(previous, next)) return;
+
+  commentSnapshot = next;
+
+  commentListeners.forEach((listener) => {
+    listener();
+  });
+}
+
 export default function useTeamRadioData({
   currentUser = MOCK_USER,
   liveStatus = 'open',
@@ -203,16 +249,13 @@ export default function useTeamRadioData({
 
     const setPostDtos = setPostSnapshot;
 
-  const [commentDtos, setCommentDtos] = useState(() =>
-    Object.fromEntries(
-      initialPosts.map((item) => [
-        String(item.id),
-        (item.comments ?? []).map((entry) =>
-          makeComment(entry, String(item.id)),
-        ),
-      ]),
-    ),
-  );
+    const commentDtos = useSyncExternalStore(
+    subscribeComments,
+    getCommentSnapshot,
+    getCommentSnapshot,
+    );
+
+    const setCommentDtos = setCommentSnapshot;
 
   const [messageDtos, setMessageDtos] = useState({});
   const [uploadedMedia, setUploadedMedia] = useState({});
@@ -234,11 +277,12 @@ export default function useTeamRadioData({
         canEdit: dto.author?.userId === userId,
         canDelete: dto.author?.userId === userId,
         likedByMe: isAuthenticated
-          ? dto.likedByMe
-          : null,
+        ? (dto.likedUserIds ?? []).includes(userId)
+        : null,
+
         bookmarkedByMe: isAuthenticated
-          ? dto.bookmarkedByMe
-          : null,
+        ? (dto.bookmarkedUserIds ?? []).includes(userId)
+        : null,
       },
       userId,
     );
@@ -370,7 +414,10 @@ export default function useTeamRadioData({
       bookmarkCount: 0,
       viewCount: 0,
       likedByMe: false,
+      likedUserIds: [],
+
       bookmarkedByMe: false,
+      bookmarkedUserIds: [],
       createdAt: iso(),
       updatedAt: iso(),
       canEdit: true,
@@ -567,41 +614,51 @@ export default function useTeamRadioData({
     requireLogin();
 
     setPostDtos((previous) =>
-      previous.map((item) =>
-        item.postId === id
-          ? {
-              ...item,
-              likedByMe: !item.likedByMe,
-              likeCount: Math.max(
-                0,
-                item.likeCount +
-                  (item.likedByMe ? -1 : 1),
-              ),
-            }
-          : item,
-      ),
-    );
-  }
+        previous.map((item) => {
+        if (item.postId !== id) return item;
 
-  function toggleSave(id) {
+        const users = item.likedUserIds ?? [];
+        const liked = users.includes(userId);
+
+        return {
+            ...item,
+            likedUserIds: liked
+            ? users.filter((id) => id !== userId)
+            : [...users, userId],
+
+            likeCount: Math.max(
+            0,
+            item.likeCount + (liked ? -1 : 1),
+            ),
+        };
+        }),
+    );
+    }
+
+    function toggleSave(id) {
     requireLogin();
 
     setPostDtos((previous) =>
-      previous.map((item) =>
-        item.postId === id
-          ? {
-              ...item,
-              bookmarkedByMe: !item.bookmarkedByMe,
-              bookmarkCount: Math.max(
-                0,
-                item.bookmarkCount +
-                  (item.bookmarkedByMe ? -1 : 1),
-              ),
-            }
-          : item,
-      ),
+        previous.map((item) => {
+        if (item.postId !== id) return item;
+
+        const users = item.bookmarkedUserIds ?? [];
+        const saved = users.includes(userId);
+
+        return {
+            ...item,
+            bookmarkedUserIds: saved
+            ? users.filter((id) => id !== userId)
+            : [...users, userId],
+
+            bookmarkCount: Math.max(
+            0,
+            item.bookmarkCount + (saved ? -1 : 1),
+            ),
+        };
+        }),
     );
-  }
+    }
 
   function toggleCommentLike(postId, id) {
     requireLogin();
