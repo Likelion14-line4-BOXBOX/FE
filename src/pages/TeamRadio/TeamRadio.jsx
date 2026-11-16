@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import useTeamRadioData from './useTeamRadioData';
 
 import {
@@ -603,6 +607,8 @@ export default function TeamRadio({
   onLogin,
 }) {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate(); 
   const garageProfile = useGarageProfile();
   const [now, setNow] = useState(() => Date.now());
 
@@ -813,6 +819,16 @@ export default function TeamRadio({
   }
 
   function backFromPost() {
+    const returnTo = location.state?.myRadioReturnTo;
+
+    if (
+      typeof returnTo === 'string' &&
+      /^\/my-garage\/radio(?:\?|$)/.test(returnTo)
+    ) {
+      navigate(returnTo, { replace: true });
+      return;
+    }
+
     const saved = searchReturnRef.current;
 
     if (!saved) {

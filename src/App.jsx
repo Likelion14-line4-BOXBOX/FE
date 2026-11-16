@@ -14,11 +14,12 @@ import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketUserProfile } from "./pages/RaceMarket/RaceMarketRanking";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
+import MyRadio from "./pages/MyGarage/MyRadio";
 import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
-  // 비회원 테스트: null / 회원 테스트: MOCK_USER
-  const currentUser = MOCK_USER;
+  // 회원 테스트: MOCK_USER / 비회원 테스트: null
+  const currentUser = null;
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -46,15 +47,26 @@ function AppRoutes() {
     location.pathname === "/my-garage" &&
     params.get("edit") === "1";
 
-  const hideBottomNav = Boolean(
-    driverDetail ||
-    settlementDetail ||
-    rankingProfile ||
-    garageEditing ||
-    radioFocused
-  );
+  const garageRadio =
+    location.pathname === "/my-garage/radio";
 
-  // 현재 샘플 데이터의 실시간 채팅방 ID
+  const isLoginGuide =
+    !currentUser?.userId &&
+    ["/my-garage", "/my-garage/radio"].includes(
+      location.pathname,
+    );
+
+  const hideBottomNav =
+    !isLoginGuide &&
+    Boolean(
+      driverDetail ||
+      settlementDetail ||
+      rankingProfile ||
+      garageEditing ||
+      garageRadio ||
+      radioFocused
+    );
+
   const isLiveChat =
     isTeamRadio &&
     view === "chat" &&
@@ -78,16 +90,12 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Home currentUser={currentUser} />
-            }
+            element={<Home currentUser={currentUser} />}
           />
 
           <Route
             path="/team-radio"
-            element={
-              <TeamRadio currentUser={currentUser} />
-            }
+            element={<TeamRadio currentUser={currentUser} />}
           />
 
           <Route
@@ -111,8 +119,13 @@ function AppRoutes() {
           />
 
           <Route
+            path="/my-garage/radio"
+            element={<MyRadio currentUser={currentUser} />}
+          />
+
+          <Route
             path="/my-garage"
-            element={<MyGarage />}
+            element={<MyGarage currentUser={currentUser} />}
           />
         </Routes>
       </main>
