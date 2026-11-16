@@ -1,5 +1,3 @@
-@import "@fontsource/bebas-neue";
-
 :global(#root) {
   position: relative;
   isolation: isolate;
@@ -345,7 +343,7 @@
   padding: 20px;
 
   border-radius: 20px;
-  background: #F5F5F6;
+  background: var(--gray-50);
   
   box-shadow: 0 0 10px 0 rgba(3, 3, 3, 0.03), 0 0 40px 0 rgba(3, 3, 3, 0.05);
 }
@@ -408,8 +406,8 @@
   height: 52px;
 
   border-radius: 8px;
-  background: #eee;
-  color: var(--gray-300, #8b8b8b);
+  background: #ededed;
+  color: #5e5e5e;
 
   font-size: 11px;
   font-weight: 400;
