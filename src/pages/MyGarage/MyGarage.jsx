@@ -774,7 +774,7 @@ export default function MyGarage({
         }`}
       >
         <div className={styles.marketHeader}>
-          <h2>MY RACE CARD</h2>
+          <h2>MY RACE CART</h2>
 
           {editing && (
             <div className={styles.privacy}>
