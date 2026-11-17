@@ -49,7 +49,7 @@ const products = [
 export default function Home({
   currentUser = null,
   // 현재 샘플 알림 수입니다. API 연동 후 실제 값을 전달하세요.
-  unreadCount = 1,
+  unreadCount = 0,
   onLogin,
   onOpenMessages,
 }) {

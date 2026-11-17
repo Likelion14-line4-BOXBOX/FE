@@ -18,7 +18,7 @@ import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 function AppRoutes() {
   // 회원 테스트: MOCK_USER / 비회원 테스트: null
-  const currentUser = null;
+  const currentUser = MOCK_USER;
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);

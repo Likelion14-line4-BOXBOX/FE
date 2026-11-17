@@ -14,9 +14,18 @@ import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
 import styles from "./MyGarage.module.scss";
 import garageLogo from "../../assets/images/mygarage/My Garage.svg";
 import {
-  getGarageProfile,
   saveGarageProfile,
 } from "../../shared/garageProfile";
+
+import {
+  getGarageAccessToken,
+  updateMyGarageProfile,
+  USE_MOCK,
+  useMyGarageData,
+  createProfilePatch,
+  displayName,
+  toGarageProfile,
+} from "../../api/myGarageApi";
 
 const imageModules = import.meta.glob(
   "../../assets/images/mygarage/**/*.svg",
@@ -41,7 +50,6 @@ function getImage(prefix, name, selected = false) {
   const filename =
     `${prefix} - ${name}${suffix}.svg`.normalize("NFC");
 
-  // 현재 저장소의 파일명에 공백이 2개 들어 있는 항목
   if (
     prefix === "팀 선택" &&
     name === "애스턴 마틴" &&
@@ -55,100 +63,6 @@ function getImage(prefix, name, selected = false) {
 
   return images[filename];
 }
-
-// 화면 확인용 하드코딩 데이터
-const TEAMS = [
-  {
-    name: "메르세데스",
-    drivers: ["조지 러셀", "키미 안토넬리"],
-  },
-  {
-    name: "페라리",
-    drivers: ["샤를 르끌레르", "루이스 해밀턴"],
-  },
-  {
-    name: "레드불 레이싱",
-    drivers: ["막스 베르스타펜", "아이작 하자르"],
-  },
-  {
-    name: "맥라렌",
-    drivers: ["랜도 노리스", "오스카 피아스트리"],
-  },
-  {
-    name: "레이싱 불스",
-    drivers: ["리암 로슨", "아비드 린드블라드"],
-  },
-  {
-    name: "애스턴 마틴",
-    drivers: ["페르난도 알론소", "랜스 스트롤"],
-  },
-  {
-    name: "알핀",
-    drivers: ["피에르 가슬리", "프랑코 콜라핀토"],
-  },
-  {
-    name: "윌리엄스",
-    drivers: ["알렉산더 알본", "카를로스 사인츠"],
-  },
-  {
-    name: "아우디",
-    drivers: ["니코 휠켄베르크", "가브리엘 보르톨레토"],
-  },
-  {
-    name: "캐딜락",
-    drivers: ["발테리 보타스", "세르히오 페레즈"],
-  },
-  {
-    name: "하스",
-    drivers: ["올리버 베어먼", "라파엘 카마라"],
-  },
-];
-
-const INITIAL_PROFILE = {
-  nickname: "해머타임기원",
-  bio: "해밀턴 8챔 보기 전엔 못 죽음",
-  team: "페라리",
-  driver: "루이스 해밀턴",
-  showAssets: true,
-  avatarSrc: "",
-};
-
-// 마지막으로 저장한 팀·선수 불러오기
-const FAVORITES_STORAGE_KEY = "boxbox-my-garage-favorites";
-
-function loadInitialProfile() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null",
-    );
-
-    const team = TEAMS.find(
-      (item) => item.name === saved?.team,
-    );
-
-    if (!team || !team.drivers.includes(saved?.driver)) {
-      return { ...INITIAL_PROFILE };
-    }
-
-    return {
-      ...INITIAL_PROFILE,
-      team: saved.team,
-      driver: saved.driver,
-    };
-  } catch {
-    return { ...INITIAL_PROFILE };
-  }
-}
-
-const MARKET = {
-  totalAssets: 100000,
-  returnRate: 2.5,
-  rank: 1,
-};
-
-// 0~23으로 바꾸면 해당 도장 SVG 표시
-const STAMP_COUNT = 5;
-const TOTAL_RACES = 23;
 
 function GarageImage({ src, alt, className = "" }) {
   if (!src) {
@@ -169,18 +83,22 @@ function GarageImage({ src, alt, className = "" }) {
   );
 }
 
-function FavoriteCard({
+export function FavoriteCard({
   type,
   name,
-  editing,
+  editing = false,
   onChange,
+  rank: suppliedRank,
 }) {
   const isTeam = type === "team";
-
-  // 현재 화면용 하드코딩 순위
-  const rank = isTeam
+  const defaultRank = isTeam
     ? { 페라리: 2 }[name]
     : { "루이스 해밀턴": 4 }[name];
+
+  const rank =
+    suppliedRank === undefined
+      ? defaultRank
+      : suppliedRank;
 
   if (!editing) {
     return (
@@ -301,7 +219,6 @@ function SelectionSheet({
     };
   }, [onClose]);
 
-  // 스크롤되는 .content 밖으로 옮겨 #root를 기준으로 표시
   return createPortal(
     <div
       className={styles.overlay}
@@ -405,6 +322,7 @@ function SelectionSheet({
 export default function MyGarage({
   currentUser = null,
   onLogin,
+  accessToken,
 }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] =
@@ -412,9 +330,49 @@ export default function MyGarage({
 
   const editing = searchParams.get("edit") === "1";
 
-  const [profile, setProfile] = useState(getGarageProfile);
-  const [draft, setDraft] = useState(() => ({ ...profile }));
+  const token =
+    accessToken ??
+    currentUser?.accessToken ??
+    getGarageAccessToken();
 
+  const garage = useMyGarageData({
+    enabled: Boolean(currentUser?.userId),
+    token,
+  });
+
+  const [savedProfile, setSavedProfile] = useState(null);
+  const serverProfile = toGarageProfile(garage.profile);
+
+  const profile =
+    savedProfile?.token === token &&
+    savedProfile?.userId === currentUser?.userId
+      ? savedProfile.profile
+      : serverProfile;
+
+  const [draftState, setDraftState] = useState(null);
+  const draft = draftState ?? profile;
+
+  const setDraft = (value) => {
+    setDraftState((previous) =>
+      typeof value === "function"
+        ? value(previous ?? profile)
+        : value,
+    );
+  };
+
+  const [saving, setSaving] = useState(false);
+  const saveControllerRef = useRef(null);
+
+  const teams = garage.teams.map((team) => ({
+    name: displayName(team.name),
+    drivers: garage.drivers
+      .filter((driver) => driver.teamId === team.teamId)
+      .map((driver) => displayName(driver.name)),
+  }));
+
+  const market = garage.market;
+  const stampCount = garage.stamps.watchedCount;
+  const totalRaces = garage.stamps.totalRaces;
 
   const [sheet, setSheet] = useState(null);
   const [pendingTeam, setPendingTeam] = useState(null);
@@ -438,12 +396,12 @@ export default function MyGarage({
   const selectionTeam = pendingTeam ?? draft.team;
 
   const driverOptions =
-    TEAMS.find((team) => team.name === selectionTeam)
+    teams.find((team) => team.name === selectionTeam)
       ?.drivers ?? [];
 
   const stampNumber = Math.min(
     23,
-    Math.max(0, STAMP_COUNT),
+    Math.max(0, stampCount),
   );
 
   const closeSheet = useCallback(() => {
@@ -456,6 +414,10 @@ export default function MyGarage({
       photoReaderRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    return () => saveControllerRef.current?.abort();
+  }, [token, currentUser?.userId]);
 
   function setEditing(value) {
     setSearchParams((previous) => {
@@ -479,6 +441,8 @@ export default function MyGarage({
   }
 
   function startEditing() {
+    if (garage.loading || saving) return;
+
     setDraft({ ...profile });
     setError("");
     setEditing(true);
@@ -494,8 +458,15 @@ export default function MyGarage({
     setEditing(false);
   }
 
-  function saveProfile() {
-    if (!hasChanges || photoLoading) return;
+  async function saveProfile() {
+    if (
+      !hasChanges ||
+      photoLoading ||
+      saving ||
+      garage.loading
+    ) {
+      return;
+    }
 
     const nickname = draft.nickname.trim();
 
@@ -504,25 +475,65 @@ export default function MyGarage({
       return;
     }
 
-    const nextProfile = {
-      ...draft,
-      nickname,
-    };
-
-    try {
-      // 팀 라디오에서도 읽는 공통 저장소에 저장
-      saveGarageProfile(nextProfile);
-    } catch {
-      setError(
-        "프로필을 저장하지 못했어요. 브라우저 저장 공간을 확인해주세요.",
-      );
+    if (draft.bio.length > 100) {
+      setError("소개는 100자 이내로 입력해 주세요.");
       return;
     }
 
-    setProfile(nextProfile);
-    setDraft(nextProfile);
+    const controller = new AbortController();
+    saveControllerRef.current = controller;
+
+    setSaving(true);
     setError("");
-    setEditing(false);
+
+    try {
+      const body = createProfilePatch(
+        draft,
+        profile,
+        garage,
+      );
+
+      const result = await updateMyGarageProfile(body, {
+        token,
+        signal: controller.signal,
+      });
+
+      if (controller.signal.aborted) return;
+
+      const next = toGarageProfile(result);
+
+      if (USE_MOCK) {
+        next.avatarSrc = draft.avatarSrc;
+      }
+
+      setSavedProfile({
+        token,
+        userId: currentUser?.userId,
+        profile: next,
+      });
+
+      setDraft(next);
+
+      // 서버 저장 성공 후 팀 라디오용 공통 캐시 갱신
+      try {
+        saveGarageProfile(next);
+      } catch {
+        // 캐시 오류와 서버 저장 결과는 분리합니다.
+      }
+
+      setEditing(false);
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setError(
+          error.message ||
+            "프로필을 저장하지 못했습니다.",
+        );
+      }
+    } finally {
+      if (saveControllerRef.current === controller) {
+        setSaving(false);
+      }
+    }
   }
 
   function changePhoto(event) {
@@ -531,6 +542,13 @@ export default function MyGarage({
     event.target.value = "";
 
     if (!file) return;
+
+    if (!USE_MOCK) {
+      setError(
+        "현재 서버는 프로필 사진 업로드를 지원하지 않습니다.",
+      );
+      return;
+    }
 
     if (!file.type.startsWith("image/")) {
       setError("이미지 파일을 선택해 주세요.");
@@ -623,7 +641,12 @@ export default function MyGarage({
           <button
             type="button"
             className={styles.saveButton}
-            disabled={!hasChanges || photoLoading}
+            disabled={
+              !hasChanges ||
+              photoLoading ||
+              saving ||
+              garage.loading
+            }
             onClick={saveProfile}
           >
             저장
@@ -736,12 +759,12 @@ export default function MyGarage({
 
       {!editing && (
         <div className={styles.profileActions}>
-        <button
-          type="button"
-          onClick={() => navigate("/my-garage/radio")}
-        >
-          마이 라디오
-        </button>
+          <button
+            type="button"
+            onClick={() => navigate("/my-garage/radio")}
+          >
+            마이 라디오
+          </button>
 
           <button
             type="button"
@@ -755,6 +778,7 @@ export default function MyGarage({
       <div className={styles.favorites}>
         <FavoriteCard
           type="team"
+          rank={current.teamRank}
           name={current.team}
           editing={editing}
           onChange={() => setSheet("team")}
@@ -762,6 +786,7 @@ export default function MyGarage({
 
         <FavoriteCard
           type="driver"
+          rank={current.driverRank}
           name={current.driver}
           editing={editing}
           onChange={() => setSheet("driver")}
@@ -770,7 +795,9 @@ export default function MyGarage({
 
       <section
         className={`${styles.marketCard} ${
-          !current.showAssets ? styles.privateMarketCard : ""
+          !current.showAssets
+            ? styles.privateMarketCard
+            : ""
         }`}
       >
         <div className={styles.marketHeader}>
@@ -786,10 +813,15 @@ export default function MyGarage({
                 aria-label="자산 비공개"
                 aria-checked={!draft.showAssets}
                 className={`${styles.switch} ${
-                  !draft.showAssets ? styles.switchOn : ""
+                  !draft.showAssets
+                    ? styles.switchOn
+                    : ""
                 }`}
                 onClick={() =>
-                  updateDraft("showAssets", !draft.showAssets)
+                  updateDraft(
+                    "showAssets",
+                    !draft.showAssets,
+                  )
                 }
               >
                 <span />
@@ -807,21 +839,31 @@ export default function MyGarage({
             <div>
               <span>총자산</span>
               <strong>
-                {MARKET.totalAssets.toLocaleString("ko-KR")}
+                {market.totalAssets == null
+                  ? "—"
+                  : Number(
+                      market.totalAssets,
+                    ).toLocaleString("ko-KR")}
               </strong>
             </div>
 
             <div>
               <span>수익률</span>
               <strong className={styles.positive}>
-                ▲ {MARKET.returnRate}%
+                ▲ {market.returnRate ?? "—"}%
               </strong>
             </div>
 
             <div>
               <span>유저 랭킹</span>
               <strong>
-                #{String(MARKET.rank).padStart(3, "0")}
+                #
+                {market.rank == null
+                  ? "—"
+                  : String(market.rank).padStart(
+                      3,
+                      "0",
+                    )}
               </strong>
             </div>
           </div>
@@ -830,9 +872,8 @@ export default function MyGarage({
 
       <section
         className={styles.stampCard}
-        aria-label={`${TOTAL_RACES}개 중 ${STAMP_COUNT}개 레이스 참여`}
+        aria-label={`${totalRaces}개 중 ${stampCount}개 레이스 참여`}
       >
-        {/* 제목과 숫자가 포함된 SVG를 그대로 표시 */}
         <GarageImage
           src={getImage(
             "레이스 스탬프",
@@ -849,7 +890,7 @@ export default function MyGarage({
           type={sheet}
           items={
             sheet === "team"
-              ? TEAMS.map((team) => team.name)
+              ? teams.map((team) => team.name)
               : driverOptions
           }
           current={
