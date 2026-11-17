@@ -1,0 +1,96 @@
+.page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  background: #fff;
+  color: #111;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+
+  box-sizing: border-box;
+  min-height: 78px;
+  padding: 20px 12px 10px;
+
+  background: #fff;
+
+  h1 {
+    flex: 1;
+    margin: 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+  }
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+
+  img {
+    display: block;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2a66e4;
+    outline-offset: 2px;
+  }
+}
+
+.empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px 20px 95px;
+
+  p {
+    color:  #5A5A5B;
+    font-family: Pretendard;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+  }
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: #111;
+  background: transparent;
+  text-decoration: none;
+
+  svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+  }
+}

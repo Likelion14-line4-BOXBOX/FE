@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import logo from "../../assets/images/logo.svg";
 import trackMexico from "../../assets/images/home/track-mexico.svg";
@@ -9,9 +9,11 @@ import capAd from "../../assets/images/home/cap.svg";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
+import useHomeData, { HOME_API_ENABLED } from "./useHomeData";
 
 import styles from "./Home.module.scss";
 
+// 경기 카드 목업은 현재 상태를 유지합니다.
 const nextRace = {
   dday: "D-2",
   round: "R19",
@@ -46,13 +48,24 @@ const products = [
   },
 ];
 
+function getPostTime(post) {
+  const time = Date.parse(post.createdAt);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function sortLatest(a, b) {
+  return getPostTime(b) - getPostTime(a);
+}
+
 export default function Home({
   currentUser = null,
-  // 현재 샘플 알림 수입니다. API 연동 후 실제 값을 전달하세요.
-  unreadCount = 1,
+  accessToken = null,
+  unreadCount = 0,
   onLogin,
   onOpenMessages,
 }) {
+  const navigate = useNavigate();
+
   const [product] = useState(
     () => products[Math.floor(Math.random() * products.length)],
   );
@@ -60,30 +73,73 @@ export default function Home({
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [notice, setNotice] = useState("");
 
+  // 기존 목업과 로컬에서 작성한 게시글을 유지합니다.
   const { posts, boards } = useTeamRadioData({
     currentUser,
   });
 
+  const {
+    data: homeData,
+    loading: homeLoading,
+    error: homeError,
+    retry: retryHome,
+  } = useHomeData({ accessToken });
+
   const isAuthenticated = Boolean(currentUser?.userId);
 
-  // 비회원이면 전달된 알림 수와 관계없이 표시하지 않습니다.
   const unread = isAuthenticated
     ? Math.max(0, Math.floor(Number(unreadCount) || 0))
     : 0;
 
-  // 아카이브를 제외한 게시글 중 최신 3개
-  const latestPosts = [...posts]
+  const localPosts = posts
     .filter((post) => post.boardId !== "archive")
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime(),
-    )
-    .slice(0, 3);
+    .map((post) => ({
+      ...post,
+      id: String(post.id),
+      boardId: String(post.boardId),
+      source: "local",
+    }))
+    .sort(sortLatest);
+
+  // 서버 글을 Home 화면에서 사용하는 형태로 변환합니다.
+  // 같은 서버 글이 중복으로 내려오면 하나만 남깁니다.
+  const apiPosts = [
+    ...new Map(
+      (HOME_API_ENABLED ? homeData?.featuredPosts ?? [] : [])
+        .filter(
+          (post) =>
+            post.postId != null &&
+            post.boardId != null &&
+            post.boardType !== "ARCHIVE",
+        )
+        .map((post) => [
+          String(post.postId),
+          {
+            ...post,
+            id: String(post.postId),
+            boardId: String(post.boardId),
+            source: "api",
+          },
+        ]),
+    ).values(),
+  ].sort(sortLatest);
+
+  // 홈에는 최대 3개를 표시합니다.
+  // 로컬 글이 있으면 최소 1개를 남기고 서버 글은 최대 2개 표시합니다.
+  // 서버 글이 부족하면 로컬 글로 나머지를 채웁니다.
+  const selectedApiPosts = apiPosts.slice(
+    0,
+    localPosts.length > 0 ? 2 : 3,
+  );
+
+  const latestPosts = [
+    ...selectedApiPosts,
+    ...localPosts.slice(0, 3 - selectedApiPosts.length),
+  ].sort(sortLatest);
 
   function getBoardName(boardId) {
     const board = boards.find(
-      (item) => item.id === boardId,
+      (item) => String(item.id) === String(boardId),
     );
 
     if (!board) return "게시판";
@@ -96,11 +152,18 @@ export default function Home({
   function handleMailClick() {
     setNotice("");
 
-    if (isAuthenticated) return;
+    if (!isAuthenticated) {
+      setLoginModalOpen(true);
+      return;
+    }
 
-    setLoginModalOpen(true);
+    if (onOpenMessages) {
+      onOpenMessages();
+      return;
+    }
+
+    navigate("/messages");
   }
-
 
   function handleLogin() {
     setLoginModalOpen(false);
@@ -168,7 +231,7 @@ export default function Home({
       )}
 
       <div className={styles.body}>
-        {/* 다음 레이스 */}
+        {/* 다음 레이스: 기존 목업 유지 */}
         <section className={styles.raceCard}>
           <span className={styles.dday}>
             {nextRace.dday}
@@ -273,16 +336,46 @@ export default function Home({
             </Link>
           </div>
 
-          {latestPosts.length === 0 && (
-            <p className={styles.empty}>
-              아직 게시글이 없습니다.
+          {HOME_API_ENABLED && homeLoading && (
+            <p
+              className={styles.empty}
+              role="status"
+            >
+              최신 게시글을 불러오는 중입니다.
             </p>
           )}
+
+          {HOME_API_ENABLED && homeError && (
+            <div
+              className={styles.empty}
+              role="alert"
+            >
+              <p>
+                서버 게시글을 불러오지 못했습니다.
+                {localPosts.length > 0 &&
+                  " 기존 게시글을 표시하고 있습니다."}
+              </p>
+
+              <button
+                type="button"
+                onClick={retryHome}
+              >
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {(!HOME_API_ENABLED || (!homeLoading && !homeError)) &&
+            latestPosts.length === 0 && (
+              <p className={styles.empty}>
+                아직 게시글이 없습니다.
+              </p>
+            )}
 
           <ul className={styles.postList}>
             {latestPosts.map((post) => (
               <li
-                key={post.id}
+                key={`${post.source}-${post.id}`}
                 className={styles.postItem}
               >
                 <Link
@@ -293,11 +386,12 @@ export default function Home({
                       view: "post",
                       board: post.boardId,
                       post: post.id,
+                      source: post.source,
                     }).toString()}`,
                   }}
                 >
                   <p className={styles.board}>
-                    {getBoardName(post.boardId)}
+                    {post.boardName ?? getBoardName(post.boardId)}
                   </p>
 
                   <div className={styles.postRow}>
@@ -320,7 +414,7 @@ export default function Home({
                         <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z" />
                       </svg>
 
-                      {post.likeCount}
+                      {post.likeCount ?? 0}
                     </span>
                   </div>
                 </Link>
