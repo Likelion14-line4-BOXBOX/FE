@@ -147,27 +147,16 @@
   height: 72px;
 
   overflow: hidden;
-
   border: 2px solid #030303;
   border-radius: 50%;
+  background: #BEBEBF;
 
-  background: var(--gray-100, #d9d9da);
-
-  img {
+  > img,
+  > svg {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  > span {
-    display: grid;
-    width: 100%;
-    height: 100%;
-    place-items: center;
-
-    font-size: 25px;
-    font-weight: 800;
   }
 }
 
@@ -501,19 +490,24 @@
     flex-basis: 70px;
   }
 
-  .avatar {
+    .avatar {
     width: 60px;
     height: 60px;
     border: 0;
+    
   }
 }
 
 .photoChange {
-  padding-top:4px;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 4px 0 0;
 
   border: 0;
   background: none;
   color: #000;
+  text-align: center;
 
   font-size: 12px !important;
   font-weight: 600 !important;
@@ -848,4 +842,12 @@
 
   font-size: 13px;
   line-height: 1.5;
+}
+
+/* 이름·소개 입력 시 파란 강조 제거 */
+.page .inputs input:focus,
+.page .inputs input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: #E0E0E0;
 }

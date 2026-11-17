@@ -145,9 +145,26 @@ const mockStamps = {
 
 const copy = (value) => structuredClone(value);
 
+const MOCK_VISIBILITY_KEY = "boxbox.garage.mock.showAssets";
+
 export function getMockGarageData() {
+  let showMarketAssets = true;
+
+  try {
+    const saved = localStorage.getItem(MOCK_VISIBILITY_KEY);
+
+    if (saved === "true" || saved === "false") {
+      showMarketAssets = saved === "true";
+    }
+  } catch {
+    // 저장소를 사용할 수 없으면 기본 공개
+  }
+
   return copy({
-    profile: mockProfile,
+    profile: {
+      ...mockProfile,
+      showMarketAssets,
+    },
     market: mockMarket,
     stamps: mockStamps,
     teams: mockTeams,
@@ -398,19 +415,27 @@ export function displayName(name) {
 }
 
 export function toGarageProfile(profile) {
+  const defaultTeam = mockTeams.find(
+    (team) => team.teamId === "ferrari",
+  );
+
+  const defaultDriver = mockDrivers.find(
+    (driver) => driver.name === "루이스 해밀턴",
+  );
+
+  const team = profile.favoriteTeam ?? defaultTeam;
+  const driver = profile.favoriteDriver ?? defaultDriver;
+
   return {
     nickname: profile.nickname ?? "",
     bio: profile.bio ?? "",
-    team: displayName(profile.favoriteTeam?.name) ?? null,
-    driver:
-      displayName(profile.favoriteDriver?.name) ?? null,
-    showAssets: profile.showMarketAssets ?? false,
+    team: displayName(team?.name) ?? null,
+    driver: displayName(driver?.name) ?? null,
+    showAssets: profile.showMarketAssets ?? true,
     avatarAssetId: profile.avatarAssetId,
     avatarSrc: "",
-    teamRank:
-      profile.favoriteTeam?.championshipRank ?? null,
-    driverRank:
-      profile.favoriteDriver?.championshipRank ?? null,
+    teamRank: team?.championshipRank ?? null,
+    driverRank: driver?.championshipRank ?? null,
   };
 }
 
