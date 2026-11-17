@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import logo from "../../assets/images/logo.svg";
 import trackMexico from "../../assets/images/home/track-mexico.svg";
@@ -9,6 +9,9 @@ import capAd from "../../assets/images/home/cap.svg";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
+import useHomeData, {
+  HOME_API_ENABLED,
+} from "./useHomeData";
 
 import styles from "./Home.module.scss";
 
@@ -46,44 +49,107 @@ const products = [
   },
 ];
 
+function getPostTime(post) {
+  const time = Date.parse(post.createdAt);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function sortLatest(a, b) {
+  return getPostTime(b) - getPostTime(a);
+}
+
 export default function Home({
   currentUser = null,
-  // 현재 샘플 알림 수입니다. API 연동 후 실제 값을 전달하세요.
+  accessToken = null,
   unreadCount = 0,
   onLogin,
   onOpenMessages,
 }) {
+  const navigate = useNavigate();
+
   const [product] = useState(
-    () => products[Math.floor(Math.random() * products.length)],
+    () =>
+      products[
+        Math.floor(Math.random() * products.length)
+      ],
   );
 
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] =
+    useState(false);
   const [notice, setNotice] = useState("");
 
   const { posts, boards } = useTeamRadioData({
     currentUser,
   });
 
-  const isAuthenticated = Boolean(currentUser?.userId);
+  const {
+    data: homeData,
+    loading: homeLoading,
+    error: homeError,
+    retry: retryHome,
+  } = useHomeData({ accessToken });
 
-  // 비회원이면 전달된 알림 수와 관계없이 표시하지 않습니다.
+  const isAuthenticated = Boolean(
+    currentUser?.userId,
+  );
+
   const unread = isAuthenticated
-    ? Math.max(0, Math.floor(Number(unreadCount) || 0))
+    ? Math.max(
+        0,
+        Math.floor(Number(unreadCount) || 0),
+      )
     : 0;
 
-  // 아카이브를 제외한 게시글 중 최신 3개
-  const latestPosts = [...posts]
+  const localPosts = posts
     .filter((post) => post.boardId !== "archive")
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime(),
-    )
-    .slice(0, 3);
+    .map((post) => ({
+      ...post,
+      id: String(post.id),
+      boardId: String(post.boardId),
+      source: "local",
+    }))
+    .sort(sortLatest);
+
+  const apiPosts = [
+    ...new Map(
+      (HOME_API_ENABLED
+        ? homeData?.featuredPosts ?? []
+        : [])
+        .filter(
+          (post) =>
+            post.postId != null &&
+            post.boardId != null &&
+            post.boardType !== "ARCHIVE",
+        )
+        .map((post) => [
+          String(post.postId),
+          {
+            ...post,
+            id: String(post.postId),
+            boardId: String(post.boardId),
+            source: "api",
+          },
+        ]),
+    ).values(),
+  ].sort(sortLatest);
+
+  const selectedApiPosts = apiPosts.slice(
+    0,
+    localPosts.length > 0 ? 2 : 3,
+  );
+
+  const latestPosts = [
+    ...selectedApiPosts,
+    ...localPosts.slice(
+      0,
+      3 - selectedApiPosts.length,
+    ),
+  ].sort(sortLatest);
 
   function getBoardName(boardId) {
     const board = boards.find(
-      (item) => item.id === boardId,
+      (item) =>
+        String(item.id) === String(boardId),
     );
 
     if (!board) return "게시판";
@@ -96,17 +162,26 @@ export default function Home({
   function handleMailClick() {
     setNotice("");
 
-    if (isAuthenticated) return;
+    if (!isAuthenticated) {
+      setLoginModalOpen(true);
+      return;
+    }
 
-    setLoginModalOpen(true);
+    if (onOpenMessages) {
+      onOpenMessages();
+      return;
+    }
+
+    navigate("/messages");
   }
-
 
   function handleLogin() {
     setLoginModalOpen(false);
 
     if (!onLogin) {
-      setNotice("로그인 화면이 아직 연결되지 않았어요.");
+      setNotice(
+        "로그인 화면이 아직 연결되지 않았어요.",
+      );
       return;
     }
 
@@ -115,7 +190,6 @@ export default function Home({
 
   return (
     <div className={styles.home}>
-      {/* 헤더 */}
       <header className={styles.header}>
         <img
           src={logo}
@@ -168,7 +242,6 @@ export default function Home({
       )}
 
       <div className={styles.body}>
-        {/* 다음 레이스 */}
         <section className={styles.raceCard}>
           <span className={styles.dday}>
             {nextRace.dday}
@@ -187,11 +260,9 @@ export default function Home({
               <p className={styles.round}>
                 {nextRace.round}
               </p>
-
               <h2 className={styles.raceName}>
                 {nextRace.name}
               </h2>
-
               <p className={styles.period}>
                 {nextRace.period}
               </p>
@@ -203,7 +274,6 @@ export default function Home({
               <p className={styles.sessionName}>
                 {nextRace.session.name}
               </p>
-
               <p className={styles.sessionTime}>
                 {nextRace.session.time}
               </p>
@@ -215,7 +285,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* 상품 광고 */}
         <section className={styles.productCard}>
           <img
             src={product.img}
@@ -227,7 +296,6 @@ export default function Home({
             <p className={styles.productName}>
               {product.name}
             </p>
-
             <p className={styles.productSpec}>
               {product.spec}
             </p>
@@ -244,7 +312,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* TEAM RADIO */}
         <section className={styles.radio}>
           <div className={styles.radioHead}>
             <h2 className={styles.radioTitle}>
@@ -256,7 +323,6 @@ export default function Home({
               className={styles.more}
             >
               더보기
-
               <svg
                 width="16"
                 height="16"
@@ -273,16 +339,47 @@ export default function Home({
             </Link>
           </div>
 
-          {latestPosts.length === 0 && (
-            <p className={styles.empty}>
-              아직 게시글이 없습니다.
+          {HOME_API_ENABLED && homeLoading && (
+            <p
+              className={styles.empty}
+              role="status"
+            >
+              최신 게시글을 불러오는 중입니다.
             </p>
           )}
+
+          {HOME_API_ENABLED && homeError && (
+            <div
+              className={styles.empty}
+              role="alert"
+            >
+              <p>
+                서버 게시글을 불러오지 못했습니다.
+                {localPosts.length > 0 &&
+                  " 기존 게시글을 표시하고 있습니다."}
+              </p>
+
+              <button
+                type="button"
+                onClick={retryHome}
+              >
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {(!HOME_API_ENABLED ||
+            (!homeLoading && !homeError)) &&
+            latestPosts.length === 0 && (
+              <p className={styles.empty}>
+                아직 게시글이 없습니다.
+              </p>
+            )}
 
           <ul className={styles.postList}>
             {latestPosts.map((post) => (
               <li
-                key={post.id}
+                key={`${post.source}-${post.id}`}
                 className={styles.postItem}
               >
                 <Link
@@ -293,11 +390,13 @@ export default function Home({
                       view: "post",
                       board: post.boardId,
                       post: post.id,
+                      source: post.source,
                     }).toString()}`,
                   }}
                 >
                   <p className={styles.board}>
-                    {getBoardName(post.boardId)}
+                    {post.boardName ??
+                      getBoardName(post.boardId)}
                   </p>
 
                   <div className={styles.postRow}>
@@ -320,7 +419,7 @@ export default function Home({
                         <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z" />
                       </svg>
 
-                      {post.likeCount}
+                      {post.likeCount ?? 0}
                     </span>
                   </div>
                 </Link>
@@ -332,7 +431,9 @@ export default function Home({
 
       {loginModalOpen && (
         <LoginRequiredModal
-          onClose={() => setLoginModalOpen(false)}
+          onClose={() =>
+            setLoginModalOpen(false)
+          }
           onLogin={handleLogin}
         />
       )}

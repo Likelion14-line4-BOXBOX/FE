@@ -31,7 +31,8 @@ import {
 } from "../../api/myGarageApi";
 
 const DEFAULT_NICKNAME = "해머타임기원";
-const DEFAULT_BIO = "해밀턴 8챔 보기 전엔 못 죽음";
+const DEFAULT_BIO =
+  "해밀턴 8챔 보기 전엔 못 죽음";
 const DEFAULT_TEAM = "페라리";
 const DEFAULT_DRIVER = "루이스 해밀턴";
 
@@ -77,12 +78,20 @@ const images = Object.fromEntries(
   ]),
 );
 
-function getImage(prefix, name, selected = false) {
+function getImage(
+  prefix,
+  name,
+  selected = false,
+) {
   if (name == null) return undefined;
 
-  const suffix = selected ? "(선택됨)" : "";
+  const suffix =
+    selected ? "(선택됨)" : "";
+
   const filename =
-    `${prefix} - ${name}${suffix}.svg`.normalize("NFC");
+    `${prefix} - ${name}${suffix}.svg`.normalize(
+      "NFC",
+    );
 
   if (
     prefix === "팀 선택" &&
@@ -152,7 +161,10 @@ export function FavoriteCard({
         <div className={styles.favoriteArtwork}>
           <GarageImage
             src={getImage("마이개러지", name)}
-            alt={name ?? "선택한 항목이 없습니다"}
+            alt={
+              name ??
+              "선택한 항목이 없습니다"
+            }
           />
         </div>
 
@@ -177,7 +189,9 @@ export function FavoriteCard({
 
   return (
     <section className={styles.editCard}>
-      <h2>{isTeam ? "MY TEAM" : "MY DRIVER"}</h2>
+      <h2>
+        {isTeam ? "MY TEAM" : "MY DRIVER"}
+      </h2>
 
       <GarageImage
         src={getImage(
@@ -206,14 +220,17 @@ function SelectionSheet({
   onClose,
   onConfirm,
 }) {
-  const [selected, setSelected] = useState(current);
+  const [selected, setSelected] =
+    useState(current);
   const dialogRef = useRef(null);
 
   const isTeam = type === "team";
-  const prefix = isTeam ? "팀 선택" : "선수 선택";
+  const prefix =
+    isTeam ? "팀 선택" : "선수 선택";
 
   useEffect(() => {
-    const previousFocus = document.activeElement;
+    const previousFocus =
+      document.activeElement;
     const dialog = dialogRef.current;
 
     dialog?.focus();
@@ -262,7 +279,6 @@ function SelectionSheet({
         "keydown",
         handleKeyDown,
       );
-
       previousFocus?.focus();
     };
   }, [onClose]);
@@ -271,7 +287,9 @@ function SelectionSheet({
     <div
       className={styles.overlay}
       onClick={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target === event.currentTarget
+        ) {
           onClose();
         }
       }}
@@ -298,23 +316,20 @@ function SelectionSheet({
           }
         >
           {items.map((name) => {
-            const normalSrc = getImage(
-              prefix,
-              name,
-            );
+            const normalSrc =
+              getImage(prefix, name);
 
-            const selectedSrc = getImage(
-              prefix,
-              name,
-              true,
-            );
+            const selectedSrc =
+              getImage(prefix, name, true);
 
             return (
               <button
                 key={name}
                 type="button"
                 aria-label={name}
-                aria-pressed={selected === name}
+                aria-pressed={
+                  selected === name
+                }
                 className={`${styles.option} ${
                   selected === name
                     ? styles.selected
@@ -328,7 +343,9 @@ function SelectionSheet({
                   }
                 }}
               >
-                <div className={styles.normalImage}>
+                <div
+                  className={styles.normalImage}
+                >
                   <GarageImage
                     src={normalSrc}
                     alt={name}
@@ -336,11 +353,15 @@ function SelectionSheet({
                 </div>
 
                 <div
-                  className={styles.selectedImage}
+                  className={
+                    styles.selectedImage
+                  }
                   aria-hidden="true"
                 >
                   <GarageImage
-                    src={selectedSrc ?? normalSrc}
+                    src={
+                      selectedSrc ?? normalSrc
+                    }
                     alt={name}
                   />
                 </div>
@@ -359,8 +380,12 @@ function SelectionSheet({
           <button
             type="button"
             className={styles.confirmButton}
-            disabled={!items.includes(selected)}
-            onClick={() => onConfirm(selected)}
+            disabled={
+              !items.includes(selected)
+            }
+            onClick={() =>
+              onConfirm(selected)
+            }
           >
             확인
           </button>
@@ -394,7 +419,6 @@ export default function MyGarage({
     token,
   });
 
-  // API 조회 성공 시 서버의 실제 사용자 ID 사용
   const visibilityUserId =
     garage.profileSource === "api"
       ? garage.profile.userId
@@ -410,12 +434,10 @@ export default function MyGarage({
     ...mappedProfile,
     nickname: DEFAULT_NICKNAME,
     bio: DEFAULT_BIO,
-    team: mappedProfile.team ?? DEFAULT_TEAM,
+    team:
+      mappedProfile.team ?? DEFAULT_TEAM,
     driver:
       mappedProfile.driver ?? DEFAULT_DRIVER,
-
-    // API 성공 시 서버 설정을 우선 사용.
-    // 목업 또는 조회 실패 시 브라우저에 저장한 값 사용.
     showAssets:
       garage.profileSource === "api"
         ? garage.profile.showMarketAssets ??
@@ -429,7 +451,8 @@ export default function MyGarage({
 
   const profile =
     savedProfile?.token === token &&
-    savedProfile?.userId === currentUser?.userId
+    savedProfile?.userId ===
+      currentUser?.userId
       ? savedProfile.profile
       : serverProfile;
 
@@ -446,17 +469,23 @@ export default function MyGarage({
     );
   };
 
-  const [saving, setSaving] = useState(false);
-  const [sheet, setSheet] = useState(null);
+  const [saving, setSaving] =
+    useState(false);
+  const [sheet, setSheet] =
+    useState(null);
   const [pendingTeam, setPendingTeam] =
     useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
   const [photoLoading, setPhotoLoading] =
     useState(false);
 
-  const saveControllerRef = useRef(null);
-  const photoInputRef = useRef(null);
-  const photoReaderRef = useRef(null);
+  const saveControllerRef =
+    useRef(null);
+  const photoInputRef =
+    useRef(null);
+  const photoReaderRef =
+    useRef(null);
 
   const teams = garage.teams.map((team) => ({
     name: displayName(team.name),
@@ -476,7 +505,8 @@ export default function MyGarage({
   const totalRaces =
     garage.stamps.totalRaces;
 
-  const current = editing ? draft : profile;
+  const current =
+    editing ? draft : profile;
 
   const hasChanges =
     draft.nickname !== profile.nickname ||
@@ -491,7 +521,8 @@ export default function MyGarage({
 
   const driverOptions =
     teams.find(
-      (team) => team.name === selectionTeam,
+      (team) =>
+        team.name === selectionTeam,
     )?.drivers ?? [];
 
   const stampNumber = Math.min(
@@ -592,7 +623,8 @@ export default function MyGarage({
     const controller =
       new AbortController();
 
-    saveControllerRef.current = controller;
+    saveControllerRef.current =
+      controller;
 
     setSaving(true);
     setError("");
@@ -623,35 +655,30 @@ export default function MyGarage({
       const next = {
         ...toGarageProfile(result),
         avatarSrc: draft.avatarSrc,
-
-        // 화면에만 표시하던 기본 최애는 유지
         team:
           displayName(
             result.favoriteTeam?.name,
           ) ??
           draft.team ??
           DEFAULT_TEAM,
-
         driver:
           displayName(
             result.favoriteDriver?.name,
           ) ??
           draft.driver ??
           DEFAULT_DRIVER,
-
         showAssets:
           result.showMarketAssets ??
           draft.showAssets,
       };
 
-      // 실제 저장 성공 후 공개 설정을 캐시
       try {
         writeVisibility(
           visibilityUserId,
           next.showAssets,
         );
       } catch {
-        // API 모드에서는 서버 저장 결과를 유지
+        // 서버 저장 결과 유지
       }
 
       setSavedProfile({
@@ -665,7 +692,7 @@ export default function MyGarage({
       try {
         saveGarageProfile(next);
       } catch {
-        // 공통 캐시 실패와 서버 저장 성공은 분리
+        // 서버 저장과 로컬 캐시는 분리
       }
 
       setSheet(null);
@@ -680,7 +707,8 @@ export default function MyGarage({
       }
     } finally {
       if (
-        saveControllerRef.current === controller
+        saveControllerRef.current ===
+        controller
       ) {
         setSaving(false);
       }
@@ -713,8 +741,11 @@ export default function MyGarage({
 
     photoReaderRef.current?.abort();
 
-    const reader = new FileReader();
-    photoReaderRef.current = reader;
+    const reader =
+      new FileReader();
+
+    photoReaderRef.current =
+      reader;
 
     setPhotoLoading(true);
     setError("");
@@ -776,9 +807,7 @@ export default function MyGarage({
       }`}
     >
       {editing ? (
-        <header
-          className={styles.editHeader}
-        >
+        <header className={styles.editHeader}>
           <button
             type="button"
             className={styles.backButton}
@@ -818,9 +847,7 @@ export default function MyGarage({
           </button>
         </header>
       ) : (
-        <header
-          className={styles.header}
-        >
+        <header className={styles.header}>
           <h1 className={styles.logo}>
             <img
               src={garageLogo}
@@ -846,12 +873,8 @@ export default function MyGarage({
             : ""
         }`}
       >
-        <div
-          className={styles.avatarArea}
-        >
-          <div
-            className={styles.avatar}
-          >
+        <div className={styles.avatarArea}>
+          <div className={styles.avatar}>
             <img
               src={
                 current.avatarSrc ||
@@ -865,9 +888,7 @@ export default function MyGarage({
             <>
               <button
                 type="button"
-                className={
-                  styles.photoChange
-                }
+                className={styles.photoChange}
                 onClick={() =>
                   photoInputRef.current?.click()
                 }
@@ -880,9 +901,7 @@ export default function MyGarage({
 
               <input
                 ref={photoInputRef}
-                className={
-                  styles.fileInput
-                }
+                className={styles.fileInput}
                 type="file"
                 accept="image/*"
                 aria-label="프로필 사진 선택"
@@ -894,12 +913,9 @@ export default function MyGarage({
         </div>
 
         {editing ? (
-          <div
-            className={styles.inputs}
-          >
+          <div className={styles.inputs}>
             <label>
               <span>이름</span>
-
               <input
                 value={draft.nickname}
                 maxLength={20}
@@ -915,7 +931,6 @@ export default function MyGarage({
 
             <label>
               <span>소개</span>
-
               <input
                 value={draft.bio}
                 maxLength={100}
@@ -930,22 +945,11 @@ export default function MyGarage({
             </label>
           </div>
         ) : (
-          <div
-            className={
-              styles.profileText
-            }
-          >
-            <h2>
-              {profile.nickname}
-            </h2>
-
+          <div className={styles.profileText}>
+            <h2>{profile.nickname}</h2>
             <p>{profile.bio}</p>
 
-            <div
-              className={
-                styles.followInfo
-              }
-            >
+            <div className={styles.followInfo}>
               <span>팔로잉 1</span>
               <span>팔로워 1</span>
             </div>
@@ -954,17 +958,11 @@ export default function MyGarage({
       </section>
 
       {!editing && (
-        <div
-          className={
-            styles.profileActions
-          }
-        >
+        <div className={styles.profileActions}>
           <button
             type="button"
             onClick={() =>
-              navigate(
-                "/my-garage/radio",
-              )
+              navigate("/my-garage/radio")
             }
           >
             마이 라디오
@@ -979,9 +977,7 @@ export default function MyGarage({
         </div>
       )}
 
-      <div
-        className={styles.favorites}
-      >
+      <div className={styles.favorites}>
         <FavoriteCard
           type="team"
           rank={current.teamRank}
@@ -1014,19 +1010,11 @@ export default function MyGarage({
             : ""
         }`}
       >
-        <div
-          className={
-            styles.marketHeader
-          }
-        >
+        <div className={styles.marketHeader}>
           <h2>MY RACE CART</h2>
 
           {editing && (
-            <div
-              className={
-                styles.privacy
-              }
-            >
+            <div className={styles.privacy}>
               <span>비공개</span>
 
               <button
@@ -1056,61 +1044,41 @@ export default function MyGarage({
         </div>
 
         {!current.showAssets ? (
-          <div
-            className={
-              styles.privateAssets
-            }
-          >
+          <div className={styles.privateAssets}>
             비공개
           </div>
         ) : (
-          <div
-            className={
-              styles.marketStats
-            }
-          >
+          <div className={styles.marketStats}>
             <div>
               <span>총자산</span>
-
               <strong>
                 {market.totalAssets == null
                   ? "—"
                   : Number(
                       market.totalAssets,
-                    ).toLocaleString(
-                      "ko-KR",
-                    )}
+                    ).toLocaleString("ko-KR")}
               </strong>
             </div>
 
             <div>
               <span>수익률</span>
-
               <strong
-                className={
-                  styles.positive
-                }
+                className={styles.positive}
               >
                 ▲{" "}
-                {market.returnRate ??
-                  "—"}
-                %
+                {market.returnRate ?? "—"}%
               </strong>
             </div>
 
             <div>
               <span>유저 랭킹</span>
-
               <strong>
                 #
                 {market.rank == null
                   ? "—"
                   : String(
                       market.rank,
-                    ).padStart(
-                      3,
-                      "0",
-                    )}
+                    ).padStart(3, "0")}
               </strong>
             </div>
           </div>
@@ -1127,9 +1095,7 @@ export default function MyGarage({
             stampNumber,
           )}
           alt="레이스 스탬프"
-          className={
-            styles.stampImage
-          }
+          className={styles.stampImage}
         />
       </section>
 
@@ -1140,23 +1106,19 @@ export default function MyGarage({
           items={
             sheet === "team"
               ? teams.map(
-                  (team) =>
-                    team.name,
+                  (team) => team.name,
                 )
               : driverOptions
           }
           current={
             sheet === "team"
               ? draft.team
-              : selectionTeam ===
-                  draft.team
+              : selectionTeam === draft.team
                 ? draft.driver
                 : null
           }
           onClose={closeSheet}
-          onConfirm={
-            confirmSelection
-          }
+          onConfirm={confirmSelection}
         />
       )}
     </div>
