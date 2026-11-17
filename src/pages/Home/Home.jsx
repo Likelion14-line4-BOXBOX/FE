@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import logo from "../../assets/images/logo.svg";
@@ -9,12 +9,13 @@ import capAd from "../../assets/images/home/cap.svg";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
-import useHomeData, { HOME_API_ENABLED } from "./useHomeData";
+import useHomeData, {
+  HOME_API_ENABLED,
+} from "./useHomeData";
 
 import styles from "./Home.module.scss";
 
-// 경기 카드 목업은 현재 상태를 유지합니다.
-const nextRace = {
+const mockNextRace = {
   dday: "D-2",
   round: "R19",
   name: "멕시코시티 그랑프리",
@@ -48,6 +49,210 @@ const products = [
   },
 ];
 
+const TIME_ZONE = "Asia/Seoul";
+
+const circuitImages = import.meta.glob(
+  "../../assets/images/home/track-*.svg",
+  {
+    eager: true,
+    query: "?url",
+    import: "default",
+  },
+);
+
+function parseDate(value) {
+  if (!value) return null;
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getDateParts(date) {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+}
+
+function formatMonthDay(value) {
+  const date = parseDate(value);
+
+  if (!date) return "일정 미정";
+
+  const parts = getDateParts(date);
+
+  return `${Number(parts.month)}.${Number(parts.day)}`;
+}
+
+function formatPeriod(startsAt, endsAt) {
+  const start = parseDate(startsAt);
+  const end = parseDate(endsAt);
+
+  if (!start && !end) return "일정 미정";
+  if (!start) return formatMonthDay(endsAt);
+  if (!end) return formatMonthDay(startsAt);
+
+  const startParts = getDateParts(start);
+  const endParts = getDateParts(end);
+
+  const sameDay =
+    startParts.year === endParts.year &&
+    startParts.month === endParts.month &&
+    startParts.day === endParts.day;
+
+  return sameDay
+    ? formatMonthDay(startsAt)
+    : `${formatMonthDay(startsAt)} - ${formatMonthDay(endsAt)}`;
+}
+
+function formatSessionTime(value) {
+  const date = parseDate(value);
+
+  if (!date) return "일정 미정";
+
+  const weekday = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: TIME_ZONE,
+    weekday: "short",
+  }).format(date);
+
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+
+  return `${formatMonthDay(value)} ${weekday} ${time}`;
+}
+
+function getDday(value, now) {
+  const target = parseDate(value);
+
+  if (!target) return "일정 미정";
+
+  const targetParts = getDateParts(target);
+  const todayParts = getDateParts(new Date(now));
+
+  const targetDay = Date.UTC(
+    Number(targetParts.year),
+    Number(targetParts.month) - 1,
+    Number(targetParts.day),
+  );
+
+  const today = Date.UTC(
+    Number(todayParts.year),
+    Number(todayParts.month) - 1,
+    Number(todayParts.day),
+  );
+
+  const days = Math.round(
+    (targetDay - today) / 86_400_000,
+  );
+
+  if (days === 0) return "D-DAY";
+
+  return days > 0
+    ? `D-${days}`
+    : `D+${Math.abs(days)}`;
+}
+
+function getRemaining(value, now) {
+  const target = parseDate(value);
+
+  if (!target) return "일정 미정";
+
+  const difference = target.getTime() - now;
+
+  if (difference <= 0) return "시작 시간 지남";
+  if (difference < 60_000) return "곧 시작";
+
+  const totalMinutes = Math.ceil(difference / 60_000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  return [
+    days > 0 ? `${days}일` : "",
+    hours > 0 ? `${hours}시간` : "",
+    `${minutes}분 남음`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function getCircuitImage(race) {
+  const filename = `track-${race.circuitKey}.svg`;
+
+  const match = Object.entries(circuitImages).find(
+    ([path]) => path.split("/").pop() === filename,
+  );
+
+  if (match) return match[1];
+
+  const description = [
+    race.name,
+    race.countryName,
+    race.circuitName,
+  ].join(" ");
+
+  if (/mexic|멕시코/i.test(description)) {
+    return trackMexico;
+  }
+
+  return null;
+}
+
+function makeRaceCard(homeData, now) {
+  const race = homeData.nextRace;
+  const session = homeData.nextSession;
+
+  if (!race) {
+    return {
+      dday: "일정 없음",
+      round: "—",
+      name: "예정된 경기가 없습니다",
+      period: "다음 경기 일정 준비 중",
+      trackImg: null,
+      session: {
+        name: "예정된 세션이 없습니다",
+        time: "—",
+        remaining: "—",
+      },
+    };
+  }
+
+  return {
+    dday: getDday(race.scheduledStartAt, now),
+    round:
+      race.roundNumber == null
+        ? "—"
+        : `R${race.roundNumber}`,
+    name: race.name,
+    period: formatPeriod(
+      race.weekendStartsAt,
+      race.weekendEndsAt,
+    ),
+    trackImg: getCircuitImage(race),
+    session: {
+      name: session?.name ?? "예정된 세션이 없습니다",
+      time: session
+        ? formatSessionTime(session.startsAt)
+        : "—",
+      remaining: session
+        ? getRemaining(session.startsAt, now)
+        : "—",
+    },
+  };
+}
+
 function getPostTime(post) {
   const time = Date.parse(post.createdAt);
   return Number.isFinite(time) ? time : 0;
@@ -70,20 +275,30 @@ export default function Home({
     () => products[Math.floor(Math.random() * products.length)],
   );
 
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] =
+    useState(false);
   const [notice, setNotice] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
-  // 기존 목업과 로컬에서 작성한 게시글을 유지합니다.
   const { posts, boards } = useTeamRadioData({
     currentUser,
   });
 
-  const {
-    data: homeData,
-    loading: homeLoading,
-    error: homeError,
-    retry: retryHome,
-  } = useHomeData({ accessToken });
+  // 홈 API는 경기 카드 데이터에만 사용
+  const { data: homeData } = useHomeData({ accessToken });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const nextRace =
+    HOME_API_ENABLED && homeData
+      ? makeRaceCard(homeData, now)
+      : mockNextRace;
 
   const isAuthenticated = Boolean(currentUser?.userId);
 
@@ -91,6 +306,7 @@ export default function Home({
     ? Math.max(0, Math.floor(Number(unreadCount) || 0))
     : 0;
 
+  // 게시글은 서버 응답을 섞지 않고 기존 목업·로컬 데이터만 사용
   const localPosts = posts
     .filter((post) => post.boardId !== "archive")
     .map((post) => ({
@@ -101,41 +317,7 @@ export default function Home({
     }))
     .sort(sortLatest);
 
-  // 서버 글을 Home 화면에서 사용하는 형태로 변환합니다.
-  // 같은 서버 글이 중복으로 내려오면 하나만 남깁니다.
-  const apiPosts = [
-    ...new Map(
-      (HOME_API_ENABLED ? homeData?.featuredPosts ?? [] : [])
-        .filter(
-          (post) =>
-            post.postId != null &&
-            post.boardId != null &&
-            post.boardType !== "ARCHIVE",
-        )
-        .map((post) => [
-          String(post.postId),
-          {
-            ...post,
-            id: String(post.postId),
-            boardId: String(post.boardId),
-            source: "api",
-          },
-        ]),
-    ).values(),
-  ].sort(sortLatest);
-
-  // 홈에는 최대 3개를 표시합니다.
-  // 로컬 글이 있으면 최소 1개를 남기고 서버 글은 최대 2개 표시합니다.
-  // 서버 글이 부족하면 로컬 글로 나머지를 채웁니다.
-  const selectedApiPosts = apiPosts.slice(
-    0,
-    localPosts.length > 0 ? 2 : 3,
-  );
-
-  const latestPosts = [
-    ...selectedApiPosts,
-    ...localPosts.slice(0, 3 - selectedApiPosts.length),
-  ].sort(sortLatest);
+  const latestPosts = localPosts.slice(0, 3);
 
   function getBoardName(boardId) {
     const board = boards.find(
@@ -178,7 +360,6 @@ export default function Home({
 
   return (
     <div className={styles.home}>
-      {/* 헤더 */}
       <header className={styles.header}>
         <img
           src={logo}
@@ -222,16 +403,12 @@ export default function Home({
       </header>
 
       {notice && (
-        <p
-          role="status"
-          className={styles.notice}
-        >
+        <p role="status" className={styles.notice}>
           {notice}
         </p>
       )}
 
       <div className={styles.body}>
-        {/* 다음 레이스: 기존 목업 유지 */}
         <section className={styles.raceCard}>
           <span className={styles.dday}>
             {nextRace.dday}
@@ -239,11 +416,13 @@ export default function Home({
 
           <div className={styles.raceInfo}>
             <div className={styles.track}>
-              <img
-                src={nextRace.trackImg}
-                alt={`${nextRace.name} 서킷`}
-                className={styles.trackImg}
-              />
+              {nextRace.trackImg && (
+                <img
+                  src={nextRace.trackImg}
+                  alt={`${nextRace.name} 서킷`}
+                  className={styles.trackImg}
+                />
+              )}
             </div>
 
             <div>
@@ -278,7 +457,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* 상품 광고 */}
         <section className={styles.productCard}>
           <img
             src={product.img}
@@ -307,7 +485,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* TEAM RADIO */}
         <section className={styles.radio}>
           <div className={styles.radioHead}>
             <h2 className={styles.radioTitle}>
@@ -336,41 +513,11 @@ export default function Home({
             </Link>
           </div>
 
-          {HOME_API_ENABLED && homeLoading && (
-            <p
-              className={styles.empty}
-              role="status"
-            >
-              최신 게시글을 불러오는 중입니다.
+          {latestPosts.length === 0 && (
+            <p className={styles.empty}>
+              아직 게시글이 없습니다.
             </p>
           )}
-
-          {HOME_API_ENABLED && homeError && (
-            <div
-              className={styles.empty}
-              role="alert"
-            >
-              <p>
-                서버 게시글을 불러오지 못했습니다.
-                {localPosts.length > 0 &&
-                  " 기존 게시글을 표시하고 있습니다."}
-              </p>
-
-              <button
-                type="button"
-                onClick={retryHome}
-              >
-                다시 시도
-              </button>
-            </div>
-          )}
-
-          {(!HOME_API_ENABLED || (!homeLoading && !homeError)) &&
-            latestPosts.length === 0 && (
-              <p className={styles.empty}>
-                아직 게시글이 없습니다.
-              </p>
-            )}
 
           <ul className={styles.postList}>
             {latestPosts.map((post) => (
@@ -391,7 +538,8 @@ export default function Home({
                   }}
                 >
                   <p className={styles.board}>
-                    {post.boardName ?? getBoardName(post.boardId)}
+                    {post.boardName ??
+                      getBoardName(post.boardId)}
                   </p>
 
                   <div className={styles.postRow}>
