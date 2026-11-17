@@ -338,6 +338,10 @@
     cursor: pointer;
 }
 
+.notice.mockNotice {
+    margin-bottom: 20px;
+}
+
 .submit {
     &.buy {
         background: var(--brand-600);
