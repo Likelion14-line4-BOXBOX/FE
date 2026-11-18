@@ -49,20 +49,6 @@ const profileMap = Object.fromEntries(
     Object.entries(profileImages).map(([path, url]) => [normalized(fileName(path)), url]),
 );
 
-function getTrack(race) {
-    const name = normalized(`${race.raceName ?? ""} ${race.raceNameEn ?? ""}`);
-
-    // 더 구체적인 지명이 국가명보다 먼저 일치하도록 정렬합니다.
-    const ordered = [...tracks].sort(
-        (first, second) => normalized(second.name).length - normalized(first.name).length,
-    );
-
-    return ordered.find((track) => name.includes(normalized(track.name)))
-        ?? ordered.find((track) => (
-            trackAliases[normalized(track.name)] ?? []
-        ).some((alias) => name.includes(normalized(alias))));
-}
-
 function defaultAvatar(rank) {
     const position = Number(rank);
 
@@ -426,9 +412,9 @@ function StampBoard({ summary }) {
     );
 }
 
-function ProfileView({ user, backUrl, garage, isMock, error, retry }) {    const { isAuthenticated, onLogin } = useMarketAccess();
+function ProfileView({ user, backUrl, garage, isMock, error, retry }) {
+    const { onLogin } = useMarketAccess();
     const [modalOpen, setModalOpen] = useState(false);
-    const [notice, setNotice] = useState("");
 
     const team = garage?.profile.favoriteTeam;
     const driver = garage?.profile.favoriteDriver;
@@ -436,11 +422,7 @@ function ProfileView({ user, backUrl, garage, isMock, error, retry }) {    const
     const summary = garage?.stampSummary;
 
     function memberAction() {
-        if (!isAuthenticated) {
-            setModalOpen(true);
-        } else {
-            setNotice("메시지와 팔로우 기능은 아직 준비 중이에요.");
-        }
+        setModalOpen(true);
     }
 
     return (
@@ -475,8 +457,6 @@ function ProfileView({ user, backUrl, garage, isMock, error, retry }) {    const
                 <button type="button" onClick={memberAction}>팔로우</button>
             </div>
 
-            {notice && <p role="status">{notice}</p>}
-
             {garage ? (
                 <>
                     <div className={garageStyles.favorites}>
@@ -499,16 +479,62 @@ function ProfileView({ user, backUrl, garage, isMock, error, retry }) {    const
                         )}
                     </div>
 
-                    <section className={styles.marketCard} aria-label="공개 자산">
-                        <h2>MY RACE CART</h2>
+                    <section
+                        className={`${garageStyles.marketCard} ${
+                            !market ? garageStyles.privateMarketCard : ""
+                        }`}
+                        aria-label="유저 자산"
+                    >
+                        <div className={garageStyles.marketHeader}>
+                            <h2>MY RACE CART</h2>
+                        </div>
+
                         {market ? (
-                            <>
-                                <strong>{formatValue(market.totalAssets, "assets")}</strong>
-                                <p>수익률 {formatValue(market.returnRate, "returns")}</p>
-                                <p>시즌 순위 {market.rank == null ? "—" : `#${market.rank}`}</p>
-                            </>
+                            <div className={garageStyles.marketStats}>
+                                <div>
+                                    <span>총자산</span>
+                                    <strong>
+                                        {formatValue(market.totalAssets, "assets")}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>수익률</span>
+                                    <strong
+                                        className={
+                                            market.returnRate > 0
+                                                ? garageStyles.positive
+                                                : undefined
+                                        }
+                                        style={
+                                            market.returnRate < 0
+                                                ? { color: "#0057D9" }
+                                                : undefined
+                                        }
+                                    >
+                                        {market.returnRate == null
+                                            ? "—"
+                                            : `${
+                                                market.returnRate > 0
+                                                    ? "▲ "
+                                                    : market.returnRate < 0 ? "▼ " : ""
+                                            }${formatValue(Math.abs(market.returnRate), "returns")}`}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>유저 랭킹</span>
+                                    <strong>
+                                        {market.rank == null
+                                            ? "—"
+                                            : `#${String(market.rank).padStart(3, "0")}`}
+                                    </strong>
+                                </div>
+                            </div>
                         ) : (
-                            <div className={styles.privateAssets}>비공개</div>
+                            <div className={garageStyles.privateAssets}>
+                                비공개
+                            </div>
                         )}
                     </section>
 
@@ -660,17 +686,11 @@ export function RaceMarketUserProfile({ accessToken } = {}) {
         const ranking = getMockRanking(period, metric);
         const user = ranking.items.find((entry) => entry.id === userId)
             ?? { ...mockUsers[mockIndex], rank: 11 };
-        const stamps = tracks.map((track, index) => ({
-            raceId: String(index),
-            raceName: track.name,
-            recordedAt: index < 3 ? "2026-01-01T00:00:00Z" : null,
-        }));
 
         return (
             <ProfileView
                 user={user}
                 garage={mockGarage(user)}
-                stamps={stamps}
                 backUrl={backUrl}
                 isMock
             />
