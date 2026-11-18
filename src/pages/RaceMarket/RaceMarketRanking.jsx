@@ -8,6 +8,8 @@ import rightBracket from "../../assets/images/racemarket/right-bracket.svg";
 import profileImage from "../../assets/images/racemarket/profile-img.svg";
 import stampImage from "../../assets/images/mygarage/레이스 스탬프 - 3.svg";
 import styles from "./RaceMarketRanking.module.scss";
+import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
+import { useMarketAccess } from "./MarketAccessContext";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -176,6 +178,7 @@ function Avatar({ user, className }) {
 }
 
 function RankingResults({ period, metric, accessToken, searchParams }) {
+    const { isAuthenticated, onLogin } = useMarketAccess();
     const result = useRanking(period, metric, accessToken);
 
     if (result.status === "loading") {
@@ -245,13 +248,21 @@ function RankingResults({ period, metric, accessToken, searchParams }) {
                 <p>공개된 랭킹이 없습니다.</p>
             )}
 
-            {me && (
+            {!isAuthenticated ? (
+                <button
+                    type="button"
+                    className={styles.joinButton}
+                    onClick={onLogin}
+                >
+                    로그인 후 참여하기
+                </button>
+            ) : me ? (
                 <div className={styles.myRank}>
                     <strong>내 순위 #{String(me.rank).padStart(3, "0")}</strong>
                     <span>{me.nickname}</span>
                     <b>{metricLabel} {formatValue(me.value, metric)}</b>
                 </div>
-            )}
+            ) : null}
         </>
     );
 }
@@ -326,6 +337,20 @@ function ProfileHeader({ backUrl }) {
 }
 
 function ProfileView({ user, backUrl, favorite }) {
+    const { isAuthenticated, onLogin } = useMarketAccess();
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+    function requestMemberAction() {
+        if (!isAuthenticated) {
+            setLoginModalOpen(true);
+        }
+    }
+
+    function handleLogin() {
+        setLoginModalOpen(false);
+        onLogin();
+    }
+
     return (
         <div className={`${garageStyles.page} ${styles.profilePage}`}>
             <ProfileHeader backUrl={backUrl} />
@@ -351,8 +376,20 @@ function ProfileView({ user, backUrl, favorite }) {
             {favorite && (
                 <>
                     <div className={garageStyles.profileActions}>
-                        <button type="button" disabled>메시지</button>
-                        <button type="button" disabled>팔로우</button>
+                        <button
+                            type="button"
+                            disabled={isAuthenticated}
+                            onClick={requestMemberAction}
+                        >
+                            메시지
+                        </button>
+                        <button
+                            type="button"
+                            disabled={isAuthenticated}
+                            onClick={requestMemberAction}
+                        >
+                            팔로우
+                        </button>
                     </div>
 
                     <div className={garageStyles.favorites}>
@@ -371,6 +408,13 @@ function ProfileView({ user, backUrl, favorite }) {
                         <img className={garageStyles.stampImage} src={stampImage} alt="레이스 스탬프" />
                     </section>
                 </>
+            )}
+
+            {loginModalOpen && (
+                <LoginRequiredModal
+                    onClose={() => setLoginModalOpen(false)}
+                    onLogin={handleLogin}
+                />
             )}
         </div>
     );

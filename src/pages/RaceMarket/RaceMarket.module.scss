@@ -37,6 +37,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding-inline: 12px;
     border-bottom: 1px solid #e0e0e0;
+    font-family: "Pretendard", sans-serif;
 
     > * {
         display: grid;
@@ -234,12 +235,23 @@
     white-space: nowrap;
 }
 
+.stockRow {
+    cursor: pointer;
+
+    &:focus-within {
+        outline: 2px solid var(--brand-500);
+        outline-offset: -2px;
+    }
+}
+
 .driverLink {
     color: inherit;
     text-decoration: none;
 
     &:hover,
-    &:focus-visible {
-        text-decoration: underline;
+    &:focus-visible,
+    &:active,
+    &:visited {
+        text-decoration: none;
     }
 }

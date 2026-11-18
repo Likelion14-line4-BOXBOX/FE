@@ -18,6 +18,7 @@ import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketUserProfile } from "./pages/RaceMarket/RaceMarketRanking";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
+import { MarketAccessProvider } from "./pages/RaceMarket/MarketAccessContext";
 
 import MyGarage from "./pages/MyGarage/MyGarage";
 import MyRadio from "./pages/MyGarage/MyRadio";
@@ -36,7 +37,7 @@ const GARAGE_PATHS = [
 
 function AppRoutes() {
   // 회원 테스트: MOCK_USER / 비회원 테스트: null
-  const currentUser = MOCK_USER;
+  const currentUser = null;
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
@@ -98,6 +99,11 @@ function AppRoutes() {
     !isLiveChat &&
     (hideBottomNav ||
       (isTeamRadio && view !== "home"));
+  
+  function handleLogin() {
+    // 실제 로그인 화면이나 로그인 창이 연결되면 이 함수에서 실행합니다.
+    window.alert("로그인 화면이 아직 연결되지 않았어요.");
+  }
 
   return (
     <>
@@ -106,66 +112,72 @@ function AppRoutes() {
           showShadow ? " pageShadow" : ""
         }`}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Home currentUser={currentUser} />
-            }
-          />
 
-          <Route
-            path="/messages"
-            element={<Messages />}
-          />
+        <MarketAccessProvider
+            currentUser={currentUser}
+            onLogin={handleLogin}
+        >
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Home currentUser={currentUser} />
+              }
+            />
 
-          <Route
-            path="/team-radio"
-            element={
-              <TeamRadio
-                currentUser={currentUser}
-              />
-            }
-          />
+            <Route
+              path="/messages"
+              element={<Messages />}
+            />
 
-          <Route
-            path="/race-market"
-            element={<RaceMarket />}
-          />
+            <Route
+              path="/team-radio"
+              element={
+                <TeamRadio
+                  currentUser={currentUser}
+                />
+              }
+            />
 
-          <Route
-            path="/race-market/drivers/:driverId"
-            element={<RaceMarketBuySell />}
-          />
+            <Route
+              path="/race-market"
+              element={<RaceMarket />}
+            />
 
-          <Route
-            path="/race-market/users/:userId"
-            element={<RaceMarketUserProfile />}
-          />
+            <Route
+              path="/race-market/drivers/:driverId"
+              element={<RaceMarketBuySell />}
+            />
 
-          <Route
-            path="/race-market/settlements/:roundId"
-            element={<RaceMarketSettlement />}
-          />
+            <Route
+              path="/race-market/users/:userId"
+              element={<RaceMarketUserProfile />}
+            />
 
-          <Route
-            path="/my-garage"
-            element={
-              <MyGarage
-                currentUser={currentUser}
-              />
-            }
-          />
+            <Route
+              path="/race-market/settlements/:roundId"
+              element={<RaceMarketSettlement />}
+            />
 
-          <Route
-            path="/my-garage/radio"
-            element={
-              <MyRadio
-                currentUser={currentUser}
-              />
-            }
-          />
-        </Routes>
+            <Route
+              path="/my-garage"
+              element={
+                <MyGarage
+                  currentUser={currentUser}
+                />
+              }
+            />
+
+            <Route
+              path="/my-garage/radio"
+              element={
+                <MyRadio
+                  currentUser={currentUser}
+                />
+              }
+            />
+          </Routes>
+        </MarketAccessProvider>
       </main>
 
       {!hideBottomNav && <BottomNav />}

@@ -3,6 +3,8 @@ import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import styles from "./RaceMarketMy.module.scss";
 import goToDetailIcon from "../../assets/images/racemarket/go-to-detail.svg";
 import backButtonIcon from "../../assets/images/racemarket/back-button.svg";
+import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
+import { useMarketAccess } from "./MarketAccessContext";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -641,7 +643,17 @@ export function RaceMarketSettlement({ accessToken }) {
     const backUrl = isClosed
         ? "/race-market?tab=my&preview=closed"
         : "/race-market?tab=my";
+    const { isAuthenticated, onLogin } = useMarketAccess();
 
+    if (!isAuthenticated) {
+        return (
+            <div className={styles.detail}>
+                <Link to={backUrl}>마이 탭으로 돌아가기</Link>
+                <LoginGuide onLogin={onLogin} />
+            </div>
+        );
+    }
+    
     if (searchParams.get("source") === "api") {
         if (!accessToken) {
             return (

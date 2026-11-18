@@ -4,7 +4,7 @@ import infoIcon from "../../assets/images/racemarket/info.svg";
 import minusIcon from "../../assets/images/racemarket/minus.svg";
 import plusIcon from "../../assets/images/racemarket/plus.svg";
 import { drivers, getMockPrice } from "./raceMarketMock";
-import styles from "./RaceMarketBuySell.module.scss";
+import styles from "./RaceMarketBuySell.module.scss";import { useMarketAccess } from "./MarketAccessContext";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -457,6 +457,7 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
 }
 
 function DriverDetail({ stock, isMock, history, retryLive, children }) {
+    const { isAuthenticated, onLogin } = useMarketAccess();
     const { driver, baseRank, startingPrice, currentPrice, changeRate, settlementRows } = stock;
     const portrait = getPortrait(driver.name);
 
@@ -540,7 +541,19 @@ function DriverDetail({ stock, isMock, history, retryLive, children }) {
                 </table>
             </section>
 
-            {children}
+            {isAuthenticated ? (
+                children
+            ) : (
+                <section className={styles.loginOrder} aria-label="로그인 안내">
+                    <button
+                        type="button"
+                        className={`${styles.submit} ${styles.buy}`}
+                        onClick={onLogin}
+                    >
+                        로그인 후 매수하기
+                    </button>
+                </section>
+            )}
         </div>
     );
 }

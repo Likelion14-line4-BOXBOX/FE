@@ -263,7 +263,7 @@
     align-items: center;
     gap: 8px;
     min-height: 44px;
-    margin-top: 10px;
+    margin-top: 20px;
     padding: 16px;
     border-radius: 12px;
     background: #111;
@@ -331,3 +331,23 @@
 
 .leftBracket { left: 0; }
 .rightBracket { right: 0; }
+
+.joinButton {
+    position: sticky;
+    bottom: 24px;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    min-height: 49px;
+    margin-top: 20px;
+    padding: 16px;
+    border: 0;
+    border-radius: 14px;
+    background: #111;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.20);
+}
