@@ -123,9 +123,10 @@ $radius-md: 12px;
   }
 
   .trackImg {
-    width: 92px;
-    height: 56px;
     display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
     .round {

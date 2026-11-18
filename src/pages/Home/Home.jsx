@@ -52,7 +52,7 @@ const products = [
 const TIME_ZONE = "Asia/Seoul";
 
 const circuitImages = import.meta.glob(
-  "../../assets/images/home/track-*.svg",
+  "../../assets/images/home/*.svg",
   {
     eager: true,
     query: "?url",
@@ -189,22 +189,184 @@ function getRemaining(value, now) {
 }
 
 function getCircuitImage(race) {
-  const filename = `track-${race.circuitKey}.svg`;
+  if (!race) return null;
 
-  const match = Object.entries(circuitImages).find(
-    ([path]) => path.split("/").pop() === filename,
-  );
+  function normalize(value) {
+    return String(value ?? "")
+      .normalize("NFC")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣]/g, "");
+  }
 
-  if (match) return match[1];
+  function findImage(filename) {
+    const entry = Object.entries(circuitImages).find(
+      ([path]) =>
+        path.split("/").pop().normalize("NFC") ===
+        filename.normalize("NFC"),
+    );
 
-  const description = [
-    race.name,
-    race.countryName,
-    race.circuitName,
-  ].join(" ");
+    return entry?.[1] ?? null;
+  }
 
-  if (/mexic|멕시코/i.test(description)) {
-    return trackMexico;
+  const circuits = [
+    {
+      file: "호주.svg",
+      aliases: ["australia", "melbourne", "albert park", "호주", "멜버른"],
+    },
+    {
+      file: "중국.svg",
+      aliases: ["china", "chinese", "shanghai", "중국", "상하이"],
+    },
+    {
+      file: "일본.svg",
+      aliases: ["japan", "japanese", "suzuka", "일본", "스즈카"],
+    },
+    {
+      file: "바레인.svg",
+      aliases: ["bahrain", "sakhir", "바레인", "사키르"],
+    },
+    {
+      file: "마이애미.svg",
+      aliases: ["miami", "마이애미"],
+    },
+    {
+      file: "캐나다.svg",
+      aliases: [
+        "canada",
+        "canadian",
+        "montreal",
+        "gilles villeneuve",
+        "캐나다",
+        "몬트리올",
+        "질 빌뇌브",
+      ],
+    },
+    {
+      file: "모나코.svg",
+      aliases: ["monaco", "monte carlo", "모나코", "몬테카를로"],
+    },
+    {
+      file: "바르셀로나.svg",
+      aliases: ["barcelona", "catalunya", "바르셀로나", "카탈루냐"],
+    },
+    {
+      file: "오스트리아.svg",
+      aliases: [
+        "austria",
+        "austrian",
+        "spielberg",
+        "red bull ring",
+        "오스트리아",
+        "슈필베르크",
+        "레드불 링",
+      ],
+    },
+    {
+      file: "영국.svg",
+      aliases: ["britain", "british", "silverstone", "영국", "실버스톤"],
+    },
+    {
+      file: "벨기에.svg",
+      aliases: ["belgium", "belgian", "spa francorchamps", "벨기에", "스파"],
+    },
+    {
+      file: "헝가리.svg",
+      aliases: ["hungary", "hungarian", "hungaroring", "헝가리", "헝가로링"],
+    },
+    {
+      file: "네덜란드.svg",
+      aliases: ["netherlands", "dutch", "zandvoort", "네덜란드", "잔드보르트"],
+    },
+    {
+      file: "이탈리아.svg",
+      aliases: ["italy", "italian", "monza", "이탈리아", "몬차", "몬자"],
+    },
+    {
+      file: "스페인.svg",
+      aliases: ["madrid", "madring", "마드리드", "마드링"],
+    },
+    {
+      file: "아제르 바이잔.svg",
+      aliases: ["azerbaijan", "baku", "아제르바이잔", "바쿠"],
+    },
+    {
+      file: "싱가포르.svg",
+      aliases: ["singapore", "marina bay", "싱가포르", "싱가폴", "마리나 베이"],
+    },
+    {
+      file: "미국 서킷.svg",
+      aliases: [
+        "united states",
+        "austin",
+        "circuit of the americas",
+        "cota",
+        "미국",
+        "오스틴",
+        "아메리카스",
+      ],
+    },
+    {
+      file: "멕시코시티.svg",
+      aliases: [
+        "mexico",
+        "hermanos rodriguez",
+        "멕시코",
+        "에르마노스 로드리게스",
+      ],
+    },
+    {
+      file: "상파울루.svg",
+      aliases: [
+        "sao paulo",
+        "brazil",
+        "brazilian",
+        "interlagos",
+        "jose carlos pace",
+        "상파울루",
+        "브라질",
+        "인터라고스",
+      ],
+    },
+    {
+      file: "라스베이거스.svg",
+      aliases: ["las vegas", "라스베이거스", "라스베가스"],
+    },
+    {
+      file: "카타르.svg",
+      aliases: ["qatar", "lusail", "losail", "카타르", "루사일", "로사일"],
+    },
+    {
+      file: "아부다비.svg",
+      aliases: ["abu dhabi", "yas marina", "아부다비", "야스 마리나"],
+    },
+  ];
+
+  function matchCircuit(value) {
+    const text = normalize(value);
+
+    if (!text) return null;
+
+    return circuits.find(({ aliases }) =>
+      aliases.some((alias) => text.includes(normalize(alias))),
+    );
+  }
+
+  // 서킷 이름을 먼저 확인해 같은 국가의 다른 경기장을 구분한다.
+  // 예: 바르셀로나 / 마드리드, 마이애미 / 오스틴 / 라스베이거스
+  const circuit =
+    matchCircuit(race.circuitName) ??
+    matchCircuit(race.name) ??
+    matchCircuit(race.circuitKey);
+
+  if (circuit) {
+    return findImage(circuit.file);
+  }
+
+  // 기존 circuitKey 파일이 있는 경우도 지원
+  if (race.circuitKey != null) {
+    return findImage(`track-${race.circuitKey}.svg`);
   }
 
   return null;
