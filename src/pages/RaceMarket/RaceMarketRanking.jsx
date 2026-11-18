@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { FavoriteCard } from "../MyGarage/MyGarage";
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
-import { useMarketAccess } from "./MarketAccessContext";
+import { useMarketAccess } from "./marketAccess";
 import garageStyles from "../MyGarage/MyGarage.module.scss";
 import styles from "./RaceMarketRanking.module.scss";
 import backIcon from "../../assets/images/racemarket/back-button.svg";
@@ -588,20 +588,6 @@ function LiveProfile({ userId, period, metric, accessToken, backUrl, initialUser
 
         async function load() {
             try {
-                if (!accessToken) {
-                    let user = initialUser?.id === userId ? initialUser : null;
-
-                    if (!user) {
-                        const ranking = await loadRanking(period, metric, undefined, signal);
-                        user = ranking.items.find((entry) => entry.id === userId);
-                    }
-
-                    if (!user) throw new Error("현재 상위 랭킹에서 이 유저를 찾을 수 없어요.");
-
-                    if (!signal.aborted) setResult({ status: "success", user });
-                    return;
-                }
-
                 const garage = await request(
                     `/users/${encodeURIComponent(userId)}/garage`,
                     accessToken,

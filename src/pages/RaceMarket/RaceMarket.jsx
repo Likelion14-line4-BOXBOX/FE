@@ -7,7 +7,7 @@ import { RaceMarketMy } from "./RaceMarketMy";
 import { RaceMarketRanking } from "./RaceMarketRanking";
 import { drivers, getMockPrice } from "./raceMarketMock";
 import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
-import { useMarketAccess } from "./MarketAccessContext";
+import { useMarketAccess } from "./marketAccess";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -34,7 +34,7 @@ const numberFormat = new Intl.NumberFormat("ko-KR");
 const rateFormat = new Intl.NumberFormat("ko-KR", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 2,
-    signDisplay: "exceptZero",
+    signDisplay: "auto",
 });
 
 async function requestMarket(path, signal) {
@@ -274,7 +274,7 @@ export default function RaceMarket({ accessToken }) {    const [searchParams] = 
                 {isRankingTab && (
                     <RaceMarketRanking accessToken={accessToken} />
                 )}
-                
+
                 {isDriverTab && (
                     <>
                         {failed && (

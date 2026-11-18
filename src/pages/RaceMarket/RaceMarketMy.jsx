@@ -4,7 +4,7 @@ import styles from "./RaceMarketMy.module.scss";
 import goToDetailIcon from "../../assets/images/racemarket/go-to-detail.svg";
 import backButtonIcon from "../../assets/images/racemarket/back-button.svg";
 import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
-import { useMarketAccess } from "./MarketAccessContext";
+import { useMarketAccess } from "./marketAccess";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -653,7 +653,7 @@ export function RaceMarketSettlement({ accessToken }) {
             </div>
         );
     }
-    
+
     if (searchParams.get("source") === "api") {
         if (!accessToken) {
             return (

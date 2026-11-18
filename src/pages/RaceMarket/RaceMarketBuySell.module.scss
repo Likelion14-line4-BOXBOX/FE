@@ -33,11 +33,16 @@
 .back {
     display: grid;
     place-items: center;
-    width: 9px;
-    height: 33px;
+    width: 32px;
+    height: 40px;
     color: inherit;
     text-decoration: none;
-    font-size: 28px;
+
+    img {
+        display: block;
+        width: 9px;
+        height: auto;
+    }
 }
 
 .summary {
@@ -395,4 +400,12 @@
     margin-top: auto;
     padding-top: 32px;
     padding-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.loginButton.loginButton {
+    flex: none;
+    width: 300px;
+    margin-inline: auto;
 }

@@ -1,9 +1,4 @@
-import { createContext, useContext } from "react";
-
-const MarketAccessContext = createContext({
-    isAuthenticated: false,
-    onLogin: () => {},
-});
+import { MarketAccessContext } from "./marketAccess";
 
 export function MarketAccessProvider({ currentUser, onLogin, children }) {
     return (
@@ -16,8 +11,4 @@ export function MarketAccessProvider({ currentUser, onLogin, children }) {
             {children}
         </MarketAccessContext.Provider>
     );
-}
-
-export function useMarketAccess() {
-    return useContext(MarketAccessContext);
 }
