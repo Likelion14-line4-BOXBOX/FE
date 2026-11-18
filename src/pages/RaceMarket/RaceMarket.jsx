@@ -170,8 +170,7 @@ function DriverStocks({ stocks, roundId }) {
     );
 }
 
-export default function RaceMarket() {
-    const [searchParams] = useSearchParams();
+export default function RaceMarket({ accessToken }) {    const [searchParams] = useSearchParams();
     const [market, setMarket] = useState(null);
     const [failed, setFailed] = useState(false);
     const [attempt, setAttempt] = useState(0);
@@ -262,13 +261,20 @@ export default function RaceMarket() {
             <div className={styles.content}>
                 {isMyTab && (
                     isAuthenticated ? (
-                        <RaceMarketMy isClosed={isClosed} />
+                        <RaceMarketMy
+                            isClosed={isClosed}
+                            accessToken={accessToken}
+                            roundId={market?.round?.roundId}
+                            season={market?.round?.season}
+                        />
                     ) : (
                         <LoginGuide onLogin={onLogin} />
                     )
                 )}
-                {isRankingTab && <RaceMarketRanking />}
-
+                {isRankingTab && (
+                    <RaceMarketRanking accessToken={accessToken} />
+                )}
+                
                 {isDriverTab && (
                     <>
                         {failed && (
