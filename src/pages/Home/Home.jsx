@@ -9,9 +9,7 @@ import capAd from "../../assets/images/home/cap.svg";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
-import useHomeData, {
-  HOME_API_ENABLED,
-} from "./useHomeData";
+import useHomeData, { HOME_API_ENABLED } from "./useHomeData";
 
 import styles from "./Home.module.scss";
 
@@ -153,15 +151,11 @@ function getDday(value, now) {
     Number(todayParts.day),
   );
 
-  const days = Math.round(
-    (targetDay - today) / 86_400_000,
-  );
+  const days = Math.round((targetDay - today) / 86_400_000);
 
   if (days === 0) return "D-DAY";
 
-  return days > 0
-    ? `D-${days}`
-    : `D+${Math.abs(days)}`;
+  return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`;
 }
 
 function getRemaining(value, now) {
@@ -193,9 +187,9 @@ function getCircuitImage(race) {
 
   function normalize(value) {
     return String(value ?? "")
-      .normalize("NFC")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFC")
       .toLowerCase()
       .replace(/[^a-z0-9가-힣]/g, "");
   }
@@ -213,7 +207,13 @@ function getCircuitImage(race) {
   const circuits = [
     {
       file: "호주.svg",
-      aliases: ["australia", "melbourne", "albert park", "호주", "멜버른"],
+      aliases: [
+        "australia",
+        "melbourne",
+        "albert park",
+        "호주",
+        "멜버른",
+      ],
     },
     {
       file: "중국.svg",
@@ -269,7 +269,13 @@ function getCircuitImage(race) {
     },
     {
       file: "벨기에.svg",
-      aliases: ["belgium", "belgian", "spa francorchamps", "벨기에", "스파"],
+      aliases: [
+        "belgium",
+        "belgian",
+        "spa francorchamps",
+        "벨기에",
+        "스파",
+      ],
     },
     {
       file: "헝가리.svg",
@@ -277,7 +283,13 @@ function getCircuitImage(race) {
     },
     {
       file: "네덜란드.svg",
-      aliases: ["netherlands", "dutch", "zandvoort", "네덜란드", "잔드보르트"],
+      aliases: [
+        "netherlands",
+        "dutch",
+        "zandvoort",
+        "네덜란드",
+        "잔드보르트",
+      ],
     },
     {
       file: "이탈리아.svg",
@@ -293,7 +305,13 @@ function getCircuitImage(race) {
     },
     {
       file: "싱가포르.svg",
-      aliases: ["singapore", "marina bay", "싱가포르", "싱가폴", "마리나 베이"],
+      aliases: [
+        "singapore",
+        "marina bay",
+        "싱가포르",
+        "싱가폴",
+        "마리나 베이",
+      ],
     },
     {
       file: "미국 서킷.svg",
@@ -353,8 +371,6 @@ function getCircuitImage(race) {
     );
   }
 
-  // 서킷 이름을 먼저 확인해 같은 국가의 다른 경기장을 구분한다.
-  // 예: 바르셀로나 / 마드리드, 마이애미 / 오스틴 / 라스베이거스
   const circuit =
     matchCircuit(race.circuitName) ??
     matchCircuit(race.name) ??
@@ -364,7 +380,6 @@ function getCircuitImage(race) {
     return findImage(circuit.file);
   }
 
-  // 기존 circuitKey 파일이 있는 경우도 지원
   if (race.circuitKey != null) {
     return findImage(`track-${race.circuitKey}.svg`);
   }
@@ -393,30 +408,21 @@ function makeRaceCard(homeData, now) {
 
   return {
     dday: getDday(race.scheduledStartAt, now),
-    round:
-      race.roundNumber == null
-        ? "—"
-        : `R${race.roundNumber}`,
+    round: race.roundNumber == null ? "—" : `R${race.roundNumber}`,
     name: race.name,
-    period: formatPeriod(
-      race.weekendStartsAt,
-      race.weekendEndsAt,
-    ),
+    period: formatPeriod(race.weekendStartsAt, race.weekendEndsAt),
     trackImg: getCircuitImage(race),
     session: {
       name: session?.name ?? "예정된 세션이 없습니다",
-      time: session
-        ? formatSessionTime(session.startsAt)
-        : "—",
-      remaining: session
-        ? getRemaining(session.startsAt, now)
-        : "—",
+      time: session ? formatSessionTime(session.startsAt) : "—",
+      remaining: session ? getRemaining(session.startsAt, now) : "—",
     },
   };
 }
 
 function getPostTime(post) {
   const time = Date.parse(post.createdAt);
+
   return Number.isFinite(time) ? time : 0;
 }
 
@@ -437,8 +443,7 @@ export default function Home({
     () => products[Math.floor(Math.random() * products.length)],
   );
 
-  const [loginModalOpen, setLoginModalOpen] =
-    useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [now, setNow] = useState(() => Date.now());
 
@@ -446,7 +451,7 @@ export default function Home({
     currentUser,
   });
 
-  // 홈 API는 경기 카드 데이터에만 사용
+  // 홈 API는 경기 카드에 사용
   const { data: homeData } = useHomeData({ accessToken });
 
   useEffect(() => {
@@ -468,7 +473,7 @@ export default function Home({
     ? Math.max(0, Math.floor(Number(unreadCount) || 0))
     : 0;
 
-  // 게시글은 서버 응답을 섞지 않고 기존 목업·로컬 데이터만 사용
+  // 게시글은 기존 목업·로컬 데이터만 사용
   const localPosts = posts
     .filter((post) => post.boardId !== "archive")
     .map((post) => ({
@@ -591,11 +596,9 @@ export default function Home({
               <p className={styles.round}>
                 {nextRace.round}
               </p>
-
               <h2 className={styles.raceName}>
                 {nextRace.name}
               </h2>
-
               <p className={styles.period}>
                 {nextRace.period}
               </p>
@@ -607,7 +610,6 @@ export default function Home({
               <p className={styles.sessionName}>
                 {nextRace.session.name}
               </p>
-
               <p className={styles.sessionTime}>
                 {nextRace.session.time}
               </p>
@@ -630,7 +632,6 @@ export default function Home({
             <p className={styles.productName}>
               {product.name}
             </p>
-
             <p className={styles.productSpec}>
               {product.spec}
             </p>
@@ -658,7 +659,6 @@ export default function Home({
               className={styles.more}
             >
               더보기
-
               <svg
                 width="16"
                 height="16"
@@ -700,8 +700,7 @@ export default function Home({
                   }}
                 >
                   <p className={styles.board}>
-                    {post.boardName ??
-                      getBoardName(post.boardId)}
+                    {post.boardName ?? getBoardName(post.boardId)}
                   </p>
 
                   <div className={styles.postRow}>

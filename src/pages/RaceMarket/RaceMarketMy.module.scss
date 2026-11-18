@@ -283,7 +283,6 @@
     align-items: start;
     gap: 8px;
     padding-block: 12px;
-    border-bottom: 1px solid var(--gray-50);
     list-style: none;
     cursor: pointer;
 
@@ -328,6 +327,14 @@
         font-family: "Bebas Neue", sans-serif;
         font-size: 18px;
         font-weight: 700;
+    }
+
+    .stock:not(:last-child) {
+        border-bottom: 1px solid var(--gray-50);
+
+        &[open] {
+            padding-bottom: 12px;
+        }
     }
 }
 

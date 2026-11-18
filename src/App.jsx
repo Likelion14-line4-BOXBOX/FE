@@ -22,7 +22,12 @@ import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
 import MyGarage from "./pages/MyGarage/MyGarage";
 import MyRadio from "./pages/MyGarage/MyRadio";
 
-const RADIO_FOCUSED_VIEWS = ["post", "write", "search", "chat"];
+const RADIO_FOCUSED_VIEWS = [
+  "post",
+  "write",
+  "search",
+  "chat",
+];
 
 const GARAGE_PATHS = [
   "/my-garage",
@@ -30,21 +35,32 @@ const GARAGE_PATHS = [
 ];
 
 function AppRoutes() {
-  // 회원 테스트 시 null을 MOCK_USER로 변경하세요.
+  // 회원 테스트: MOCK_USER / 비회원 테스트: null
   const currentUser = MOCK_USER;
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
   const view = params.get("view") || "home";
 
-  const driverDetail = useMatch("/race-market/drivers/:driverId");
-  const settlementDetail = useMatch("/race-market/settlements/:roundId");
-  const rankingProfile = useMatch("/race-market/users/:userId");
+  const driverDetail = useMatch(
+    "/race-market/drivers/:driverId",
+  );
+  const settlementDetail = useMatch(
+    "/race-market/settlements/:roundId",
+  );
+  const rankingProfile = useMatch(
+    "/race-market/users/:userId",
+  );
 
-  const isAuthenticated = Boolean(currentUser?.userId);
-  const isTeamRadio = pathname === "/team-radio";
-  const isMessages = pathname === "/messages";
-  const isGarageRadio = pathname === "/my-garage/radio";
+  const isAuthenticated = Boolean(
+    currentUser?.userId,
+  );
+  const isTeamRadio =
+    pathname === "/team-radio";
+  const isMessages =
+    pathname === "/messages";
+  const isGarageRadio =
+    pathname === "/my-garage/radio";
 
   const isGarageEditing =
     pathname === "/my-garage" &&
@@ -60,15 +76,16 @@ function AppRoutes() {
 
   const isMarketDetail = Boolean(
     driverDetail ||
-    settlementDetail ||
-    rankingProfile,
+      settlementDetail ||
+      rankingProfile,
   );
 
   const hideBottomNav =
     isMessages ||
     isMarketDetail ||
     isRadioFocused ||
-    (!isGarageLoginGuide && (isGarageEditing || isGarageRadio));
+    (!isGarageLoginGuide &&
+      (isGarageEditing || isGarageRadio));
 
   const race = params.get("race");
 
@@ -79,17 +96,22 @@ function AppRoutes() {
 
   const showShadow =
     !isLiveChat &&
-    (hideBottomNav || (isTeamRadio && view !== "home"));
+    (hideBottomNav ||
+      (isTeamRadio && view !== "home"));
 
   return (
     <>
       <main
-        className={`content${showShadow ? " pageShadow" : ""}`}
+        className={`content${
+          showShadow ? " pageShadow" : ""
+        }`}
       >
         <Routes>
           <Route
             path="/"
-            element={<Home currentUser={currentUser} />}
+            element={
+              <Home currentUser={currentUser} />
+            }
           />
 
           <Route
@@ -99,7 +121,11 @@ function AppRoutes() {
 
           <Route
             path="/team-radio"
-            element={<TeamRadio currentUser={currentUser} />}
+            element={
+              <TeamRadio
+                currentUser={currentUser}
+              />
+            }
           />
 
           <Route
@@ -124,12 +150,20 @@ function AppRoutes() {
 
           <Route
             path="/my-garage"
-            element={<MyGarage currentUser={currentUser} />}
+            element={
+              <MyGarage
+                currentUser={currentUser}
+              />
+            }
           />
 
           <Route
             path="/my-garage/radio"
-            element={<MyRadio currentUser={currentUser} />}
+            element={
+              <MyRadio
+                currentUser={currentUser}
+              />
+            }
           />
         </Routes>
       </main>
