@@ -24,9 +24,11 @@ $radius-md: 12px;
 
   .logo {
     display: block;
-    width: 161px;
-    height: 29px;
+    width: 215px;
+    height: auto;
     margin: 0;
+    object-fit: contain;
+    clip-path: inset(1px 0);
   }
 
   .mail {
