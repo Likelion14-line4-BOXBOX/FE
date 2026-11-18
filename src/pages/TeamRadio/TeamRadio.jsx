@@ -9,6 +9,9 @@ import TeamRadioView from "./TeamRadioView";
 import useRadioChat, {
   CHAT_API_ENABLED,
 } from "./useRadioChat";
+import { useGarageProfile } from "../../shared/garageProfile";
+
+import useChatPreview from "./useChatPreview";
 
 import {
   Asset,
@@ -54,43 +57,81 @@ function remaining(value, now) {
 }
 
 export default function TeamRadio(props) {
+  const garageProfile = useGarageProfile();
   const [params, setParams] =
     useSearchParams();
+
+  // npm run dev 환경에서만 미리보기 허용
+  const requestedPreview =
+    import.meta.env.DEV
+      ? params.get("preview")
+      : null;
+
+  const previewMode = [
+    "live",
+    "closed",
+  ].includes(requestedPreview)
+    ? requestedPreview
+    : null;
 
   const view =
     params.get("view") || "home";
 
-  const chatView = view === "chat";
+  const chatView =
+    view === "chat" ||
+    Boolean(previewMode);
 
   const lobbyView =
+    !previewMode &&
     view === "home" &&
     params.get("tab") === "chat";
 
-  const roomId = params.get("race");
-
-  const chat = useRadioChat({
+  // 미리보기에서는 실제 채팅 API를 실행하지 않음
+  const realChat = useRadioChat({
     enabled:
+      !previewMode &&
       CHAT_API_ENABLED &&
       (chatView || lobbyView),
-
     selectedRoomId:
-      chatView ? roomId : null,
-
+      chatView && !previewMode
+        ? params.get("race")
+        : null,
     accessToken: props.accessToken,
     currentUser: props.currentUser,
   });
 
-  const [input, setInput] = useState("");
+    const previewChat = useChatPreview({
+    mode: previewMode,
+    nickname:
+        garageProfile.nickname ||
+        props.currentUser?.nickname ||
+        "해머타임기원",
+    });
+
+  const chat = previewMode
+    ? previewChat
+    : realChat;
+
+  const [input, setInput] =
+    useState("");
   const [sending, setSending] =
     useState(false);
-  const [error, setError] = useState("");
-  const [menu, setMenu] = useState(null);
+  const [error, setError] =
+    useState("");
+  const [menu, setMenu] =
+    useState(null);
 
   const pageRef = useRef(null);
   const messagesRef = useRef(null);
   const loadedRoomRef = useRef(null);
-  const shouldFollowRef = useRef(true);
-  const operationRef = useRef(false);
+  const shouldFollowRef =
+    useRef(true);
+  const operationRef =
+    useRef(false);
+
+  const roomId = previewMode
+    ? "preview-mexico"
+    : params.get("race");
 
   const room = chat.races.find(
     (item) => item.id === roomId,
@@ -98,7 +139,8 @@ export default function TeamRadio(props) {
 
   const activeRoom =
     chat.races.find(
-      (item) => item.status === "LIVE",
+      (item) =>
+        item.status === "LIVE",
     ) ??
     chat.races.find(
       (item) =>
@@ -114,7 +156,8 @@ export default function TeamRadio(props) {
   const messages = chat
     .getMessages(roomId)
     .filter(
-      (message) => !message.isDeleted,
+      (message) =>
+        !message.isDeleted,
     );
 
   const canSend = Boolean(
@@ -123,7 +166,6 @@ export default function TeamRadio(props) {
       chat.currentUser,
   );
 
-  // 기존 채팅 화면 높이 처리 유지
   useEffect(() => {
     if (!chatView) return;
 
@@ -180,7 +222,6 @@ export default function TeamRadio(props) {
     };
   }, [chatView]);
 
-  // 처음 입장하거나 하단을 보고 있을 때만 새 메시지를 따라감
   useEffect(() => {
     if (!chatView || chat.loading) {
       return;
@@ -198,7 +239,8 @@ export default function TeamRadio(props) {
       container.scrollTop =
         container.scrollHeight;
 
-      loadedRoomRef.current = roomId;
+      loadedRoomRef.current =
+        roomId;
     }
   }, [
     chatView,
@@ -245,7 +287,8 @@ export default function TeamRadio(props) {
 
     requestAnimationFrame(() => {
       if (
-        messagesRef.current === container
+        messagesRef.current ===
+        container
       ) {
         container.scrollTop +=
           container.scrollHeight -
@@ -266,6 +309,7 @@ export default function TeamRadio(props) {
     }
 
     operationRef.current = true;
+
     setSending(true);
     setError("");
 
@@ -294,7 +338,9 @@ export default function TeamRadio(props) {
   }
 
   async function removeMessage(id) {
-    if (operationRef.current) return;
+    if (operationRef.current) {
+      return;
+    }
 
     operationRef.current = true;
 
@@ -313,9 +359,9 @@ export default function TeamRadio(props) {
     }
   }
 
-  // 기존 게시판·게시글·댓글·검색·작성 UI 그대로 사용
   if (
-    !CHAT_API_ENABLED ||
+    (!CHAT_API_ENABLED &&
+      !previewMode) ||
     (!chatView && !lobbyView)
   ) {
     return (
@@ -481,6 +527,7 @@ export default function TeamRadio(props) {
                       Round{" "}
                       {item.round}
                     </small>
+
                     <strong>
                       {item.title}
                     </strong>
@@ -531,37 +578,37 @@ export default function TeamRadio(props) {
               {room?.title ??
                 "채팅방"}
 
-              <small
-                className={
-                  s.chatLiveMeta
-                }
-              >
-                {room?.status ===
-                "LIVE" ? (
-                  <>
-                    <Asset
-                      name="live"
-                      fallback="LIVE"
-                      className={
-                        s.liveBadge
-                      }
-                    />
+              {room?.status !==
+                "ARCHIVED" && (
+                <small
+                  className={
+                    s.chatLiveMeta
+                  }
+                >
+                  {room?.status ===
+                  "LIVE" ? (
+                    <>
+                      <Asset
+                        name="live"
+                        fallback="LIVE"
+                        className={
+                          s.liveBadge
+                        }
+                      />
 
-                    <span>
-                      종료까지{" "}
-                      {remaining(
-                        room.closesAt,
-                        chat.clock,
-                      )}
-                    </span>
-                  </>
-                ) : room?.status ===
-                  "ARCHIVED" ? (
-                  "지난 채팅"
-                ) : (
-                  "오픈 전"
-                )}
-              </small>
+                      <span>
+                        종료까지{" "}
+                        {remaining(
+                          room.closesAt,
+                          chat.clock,
+                        )}
+                      </span>
+                    </>
+                  ) : (
+                    "오픈 전"
+                  )}
+                </small>
+              )}
             </h1>
 
             <span
@@ -694,8 +741,7 @@ export default function TeamRadio(props) {
 
                               if (
                                 message.canDelete &&
-                                room?.status ===
-                                  "LIVE"
+                                canSend
                               ) {
                                 setMenu(
                                   message.id,
@@ -705,8 +751,7 @@ export default function TeamRadio(props) {
                             onClick={() => {
                               if (
                                 message.canDelete &&
-                                room?.status ===
-                                  "LIVE"
+                                canSend
                               ) {
                                 setMenu(
                                   menu ===
@@ -730,8 +775,7 @@ export default function TeamRadio(props) {
                         {menu ===
                           message.id &&
                           message.canDelete &&
-                          room?.status ===
-                            "LIVE" && (
+                          canSend && (
                             <div
                               className={
                                 s.messageMenu
@@ -764,12 +808,15 @@ export default function TeamRadio(props) {
               >
                 {chat.loading
                   ? "채팅을 불러오는 중입니다."
-                  : !chat.currentUser
-                    ? "로그인 후 이용 가능합니다."
-                    : room?.status ===
-                        "SCHEDULED"
-                      ? "아직 채팅방이 열리지 않았어요."
-                      : "현재 메시지를 전송할 수 없는 방입니다."}
+                  : room?.status ===
+                      "ARCHIVED"
+                    ? "라이브 채팅이 종료되었습니다."
+                    : !chat.currentUser
+                      ? "로그인 후 이용 가능합니다."
+                      : room?.status ===
+                          "SCHEDULED"
+                        ? "아직 채팅방이 열리지 않았어요."
+                        : "현재 메시지를 전송할 수 없는 방입니다."}
               </p>
             )}
           </div>
