@@ -1486,9 +1486,7 @@ export default function TeamRadio({
                     <Asset
                       name={team.asset}
                       hoverName={`${team.asset}_선택`}
-                      selected={
-                        garageProfile.team === team.name
-                      }
+                      selected={radio.isAuthenticated && garageProfile.team === team.name}
                       fallback={team.name}
                     />
                   </button>
