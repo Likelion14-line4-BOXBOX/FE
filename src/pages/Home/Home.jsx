@@ -9,11 +9,12 @@ import capAd from "../../assets/images/home/cap.svg";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
-import useHomeData, { HOME_API_ENABLED } from "./useHomeData";
+import useHomeData, {
+  HOME_API_ENABLED,
+} from "./useHomeData";
 
 import styles from "./Home.module.scss";
 
-// 경기 카드 목업은 현재 상태를 유지합니다.
 const nextRace = {
   dday: "D-2",
   round: "R19",
@@ -67,13 +68,16 @@ export default function Home({
   const navigate = useNavigate();
 
   const [product] = useState(
-    () => products[Math.floor(Math.random() * products.length)],
+    () =>
+      products[
+        Math.floor(Math.random() * products.length)
+      ],
   );
 
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] =
+    useState(false);
   const [notice, setNotice] = useState("");
 
-  // 기존 목업과 로컬에서 작성한 게시글을 유지합니다.
   const { posts, boards } = useTeamRadioData({
     currentUser,
   });
@@ -85,10 +89,15 @@ export default function Home({
     retry: retryHome,
   } = useHomeData({ accessToken });
 
-  const isAuthenticated = Boolean(currentUser?.userId);
+  const isAuthenticated = Boolean(
+    currentUser?.userId,
+  );
 
   const unread = isAuthenticated
-    ? Math.max(0, Math.floor(Number(unreadCount) || 0))
+    ? Math.max(
+        0,
+        Math.floor(Number(unreadCount) || 0),
+      )
     : 0;
 
   const localPosts = posts
@@ -101,11 +110,11 @@ export default function Home({
     }))
     .sort(sortLatest);
 
-  // 서버 글을 Home 화면에서 사용하는 형태로 변환합니다.
-  // 같은 서버 글이 중복으로 내려오면 하나만 남깁니다.
   const apiPosts = [
     ...new Map(
-      (HOME_API_ENABLED ? homeData?.featuredPosts ?? [] : [])
+      (HOME_API_ENABLED
+        ? homeData?.featuredPosts ?? []
+        : [])
         .filter(
           (post) =>
             post.postId != null &&
@@ -124,9 +133,6 @@ export default function Home({
     ).values(),
   ].sort(sortLatest);
 
-  // 홈에는 최대 3개를 표시합니다.
-  // 로컬 글이 있으면 최소 1개를 남기고 서버 글은 최대 2개 표시합니다.
-  // 서버 글이 부족하면 로컬 글로 나머지를 채웁니다.
   const selectedApiPosts = apiPosts.slice(
     0,
     localPosts.length > 0 ? 2 : 3,
@@ -134,12 +140,16 @@ export default function Home({
 
   const latestPosts = [
     ...selectedApiPosts,
-    ...localPosts.slice(0, 3 - selectedApiPosts.length),
+    ...localPosts.slice(
+      0,
+      3 - selectedApiPosts.length,
+    ),
   ].sort(sortLatest);
 
   function getBoardName(boardId) {
     const board = boards.find(
-      (item) => String(item.id) === String(boardId),
+      (item) =>
+        String(item.id) === String(boardId),
     );
 
     if (!board) return "게시판";
@@ -169,7 +179,9 @@ export default function Home({
     setLoginModalOpen(false);
 
     if (!onLogin) {
-      setNotice("로그인 화면이 아직 연결되지 않았어요.");
+      setNotice(
+        "로그인 화면이 아직 연결되지 않았어요.",
+      );
       return;
     }
 
@@ -178,7 +190,6 @@ export default function Home({
 
   return (
     <div className={styles.home}>
-      {/* 헤더 */}
       <header className={styles.header}>
         <img
           src={logo}
@@ -231,7 +242,6 @@ export default function Home({
       )}
 
       <div className={styles.body}>
-        {/* 다음 레이스: 기존 목업 유지 */}
         <section className={styles.raceCard}>
           <span className={styles.dday}>
             {nextRace.dday}
@@ -250,11 +260,9 @@ export default function Home({
               <p className={styles.round}>
                 {nextRace.round}
               </p>
-
               <h2 className={styles.raceName}>
                 {nextRace.name}
               </h2>
-
               <p className={styles.period}>
                 {nextRace.period}
               </p>
@@ -266,7 +274,6 @@ export default function Home({
               <p className={styles.sessionName}>
                 {nextRace.session.name}
               </p>
-
               <p className={styles.sessionTime}>
                 {nextRace.session.time}
               </p>
@@ -278,7 +285,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* 상품 광고 */}
         <section className={styles.productCard}>
           <img
             src={product.img}
@@ -290,7 +296,6 @@ export default function Home({
             <p className={styles.productName}>
               {product.name}
             </p>
-
             <p className={styles.productSpec}>
               {product.spec}
             </p>
@@ -307,7 +312,6 @@ export default function Home({
           </div>
         </section>
 
-        {/* TEAM RADIO */}
         <section className={styles.radio}>
           <div className={styles.radioHead}>
             <h2 className={styles.radioTitle}>
@@ -319,7 +323,6 @@ export default function Home({
               className={styles.more}
             >
               더보기
-
               <svg
                 width="16"
                 height="16"
@@ -365,7 +368,8 @@ export default function Home({
             </div>
           )}
 
-          {(!HOME_API_ENABLED || (!homeLoading && !homeError)) &&
+          {(!HOME_API_ENABLED ||
+            (!homeLoading && !homeError)) &&
             latestPosts.length === 0 && (
               <p className={styles.empty}>
                 아직 게시글이 없습니다.
@@ -391,7 +395,8 @@ export default function Home({
                   }}
                 >
                   <p className={styles.board}>
-                    {post.boardName ?? getBoardName(post.boardId)}
+                    {post.boardName ??
+                      getBoardName(post.boardId)}
                   </p>
 
                   <div className={styles.postRow}>
@@ -426,7 +431,9 @@ export default function Home({
 
       {loginModalOpen && (
         <LoginRequiredModal
-          onClose={() => setLoginModalOpen(false)}
+          onClose={() =>
+            setLoginModalOpen(false)
+          }
           onLogin={handleLogin}
         />
       )}

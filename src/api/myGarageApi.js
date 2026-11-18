@@ -1,15 +1,31 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+import { useCallback, useEffect, useState } from "react";
 
-// .env에서 VITE_USE_MOCK=false로 설정하면 실제 API 사용
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL || "/api"
+).replace(/\/$/, "");
+
+// true: 목업만 사용
+// false 또는 미설정: API 우선, 조회 실패 시 목업 표시
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 async function request(path, { token, ...options } = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: "include",
+    signal: options.signal
+      ? AbortSignal.any([
+          options.signal,
+          AbortSignal.timeout(8000),
+        ])
+      : AbortSignal.timeout(8000),
     headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: "application/json",
+      ...(options.body
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...(token
+        ? { Authorization: `Bearer ${token}` }
+        : {}),
       ...options.headers,
     },
   });
@@ -23,18 +39,50 @@ async function request(path, { token, ...options } = {}) {
       409: "이미 사용 중인 닉네임입니다.",
     };
 
-    throw new Error(
-      messages[response.status] ??
-        body.error?.message ??
+    const error = new Error(
+      body.error?.message ??
+        messages[response.status] ??
         "요청에 실패했습니다. 잠시 후 다시 시도해 주세요.",
     );
+
+    error.status = response.status;
+    error.code = body.error?.code;
+
+    throw error;
+  }
+
+  if (!body.data || typeof body.data !== "object") {
+    throw new Error("API 응답 형식을 확인해 주세요.");
+  }
+
+  if (
+    path === "/me" &&
+    (typeof body.data.userId !== "string" ||
+      typeof body.data.nickname !== "string")
+  ) {
+    throw new Error("프로필 응답 형식을 확인해 주세요.");
+  }
+
+  if (
+    path === "/me/portfolio" &&
+    (body.data.totalAssets == null ||
+      !Number.isFinite(Number(body.data.totalAssets)))
+  ) {
+    throw new Error("자산 응답 형식을 확인해 주세요.");
+  }
+
+  if (
+    path.includes("/race-stamps") &&
+    (!Number.isInteger(body.data.watchedCount) ||
+      !Number.isInteger(body.data.totalRaces))
+  ) {
+    throw new Error("도장판 응답 형식을 확인해 주세요.");
   }
 
   return body.data;
 }
 
-// 아래 ID는 목 데이터 전용.
-// 실제 연결 시 /api/reference-data에서 받은 ID를 사용합니다.
+// 아래 ID는 목업 전용입니다.
 const mockTeamData = [
   ["mercedes", "메르세데스", ["조지 러셀", "키미 안토넬리"]],
   ["ferrari", "페라리", ["샤를 르끌레르", "루이스 해밀턴"]],
@@ -49,11 +97,13 @@ const mockTeamData = [
   ["haas", "하스", ["올리버 베어먼", "라파엘 카마라"]],
 ];
 
-const mockTeams = mockTeamData.map(([teamId, name], index) => ({
-  teamId,
-  name,
-  championshipRank: index + 1,
-}));
+const mockTeams = mockTeamData.map(
+  ([teamId, name], index) => ({
+    teamId,
+    name,
+    championshipRank: index + 1,
+  }),
+);
 
 const mockDrivers = mockTeamData.flatMap(
   ([teamId, teamName, names], teamIndex) =>
@@ -71,7 +121,9 @@ let mockProfile = {
   nickname: "해머타임기원",
   bio: "해밀턴 8챔 보기 전엔 못 죽음",
   avatarAssetId: null,
-  favoriteTeam: mockTeams.find((team) => team.teamId === "ferrari"),
+  favoriteTeam: mockTeams.find(
+    (team) => team.teamId === "ferrari",
+  ),
   favoriteDriver: mockDrivers.find(
     (driver) => driver.name === "루이스 해밀턴",
   ),
@@ -93,68 +145,412 @@ const mockStamps = {
 
 const copy = (value) => structuredClone(value);
 
-export async function getMyGarageData({ signal, token, season } = {}) {
-  if (USE_MOCK) {
-    return copy({
-      profile: mockProfile,
-      market: mockMarket,
-      stamps: mockStamps,
-      teams: mockTeams,
-      drivers: mockDrivers,
-    });
+const MOCK_VISIBILITY_KEY = "boxbox.garage.mock.showAssets";
+
+export function getMockGarageData() {
+  let showMarketAssets = true;
+
+  try {
+    const saved = localStorage.getItem(MOCK_VISIBILITY_KEY);
+
+    if (saved === "true" || saved === "false") {
+      showMarketAssets = saved === "true";
+    }
+  } catch {
+    // 저장소를 사용할 수 없으면 기본 공개
   }
 
-  const [profile, reference] = await Promise.all([
-    request("/api/me", { signal, token }),
-    request("/api/reference-data", { signal, token }),
-  ]);
+  return copy({
+    profile: {
+      ...mockProfile,
+      showMarketAssets,
+    },
+    market: mockMarket,
+    stamps: mockStamps,
+    teams: mockTeams,
+    drivers: mockDrivers,
+  });
+}
 
-  const userId = encodeURIComponent(profile.userId);
+export function getGarageAccessToken() {
+  try {
+    return sessionStorage.getItem("boxbox.accessToken");
+  } catch {
+    return null;
+  }
+}
 
-  const query =
-    season == null
-      ? ""
-      : `?${new URLSearchParams({ season: String(season) })}`;
+// 현재 BE dev에는 reference-data API가 없어
+// 공개된 현재 라운드의 선수 응답에서 실제 팀·선수 ID를 가져옵니다.
+async function getRoster(options) {
+  const { round } = await request(
+    "/market/rounds/current",
+    options,
+  );
 
-  const [garage, stamps] = await Promise.all([
-    request(`/api/users/${userId}/garage`, { signal, token }),
-    request(`/api/users/${userId}/race-stamps${query}`, {
-      signal,
-      token,
-    }),
-  ]);
+  if (!round) {
+    return { teams: [], drivers: [] };
+  }
+
+  const drivers = [];
+  let cursor;
+
+  do {
+    const query = new URLSearchParams({ size: "20" });
+
+    if (cursor) {
+      query.set("cursor", cursor);
+    }
+
+    const page = await request(
+      `/market/rounds/${encodeURIComponent(
+        round.roundId,
+      )}/stocks?${query}`,
+      options,
+    );
+
+    drivers.push(...page.items.map((item) => item.driver));
+    cursor = page.hasNext ? page.nextCursor : null;
+  } while (cursor);
 
   return {
-    profile,
-    market: garage.marketSummary,
-    stamps,
-    teams: reference.teams,
-    drivers: reference.drivers,
+    drivers,
+    teams: [
+      ...new Map(
+        drivers.map((driver) => [
+          driver.teamId,
+          {
+            teamId: driver.teamId,
+            name: driver.teamName,
+          },
+        ]),
+      ).values(),
+    ],
   };
 }
 
-export async function updateMyGarageProfile(body, { token } = {}) {
+export async function getMyGarageData({
+  signal,
+  token,
+  season,
+} = {}) {
+  const fallback = getMockGarageData();
+
+  if (USE_MOCK) {
+    return {
+      ...fallback,
+      profileSource: "mock",
+      failures: [],
+    };
+  }
+
+  const options = { signal, token };
+  const query =
+    season == null
+      ? ""
+      : `?${new URLSearchParams({
+          season: String(season),
+        })}`;
+
+  const [profileResult, marketResult, rosterResult] =
+    await Promise.allSettled([
+      request("/me", options),
+      request("/me/portfolio", options),
+      getRoster(options),
+    ]);
+
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
+  const failures = [];
+
+  const profileSource =
+    profileResult.status === "fulfilled"
+      ? "api"
+      : "fallback";
+
+  const profile =
+    profileSource === "api"
+      ? profileResult.value
+      : fallback.profile;
+
+  if (profileSource === "fallback") {
+    failures.push("profile");
+  }
+
+  let stamps = fallback.stamps;
+
+  if (profileSource === "api") {
+    try {
+      stamps = await request(
+        `/users/${encodeURIComponent(
+          profile.userId,
+        )}/race-stamps${query}`,
+        options,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      failures.push("stamps");
+    }
+  } else {
+    failures.push("stamps");
+  }
+
+  let market = fallback.market;
+
+  if (marketResult.status === "fulfilled") {
+    const value = marketResult.value;
+
+    market = {
+      totalAssets: value.totalAssets,
+      returnRate: value.seasonReturnRate,
+      rank: value.seasonRank,
+    };
+  } else {
+    failures.push("market");
+  }
+
+  // 실제 프로필에 목업 ID가 섞이지 않도록 합니다.
+  let roster =
+    profileSource === "api"
+      ? { teams: [], drivers: [] }
+      : fallback;
+
+  if (
+    profileSource === "api" &&
+    rosterResult.status === "fulfilled"
+  ) {
+    roster = rosterResult.value;
+  }
+
+  const teams = [...roster.teams];
+  const drivers = [...roster.drivers];
+
+  if (
+    profile.favoriteTeam &&
+    !teams.some(
+      (team) =>
+        team.teamId === profile.favoriteTeam.teamId,
+    )
+  ) {
+    teams.push(profile.favoriteTeam);
+  }
+
+  if (
+    profile.favoriteDriver &&
+    !drivers.some(
+      (driver) =>
+        driver.driverId === profile.favoriteDriver.driverId,
+    )
+  ) {
+    drivers.push(profile.favoriteDriver);
+  }
+
+  return {
+    profile,
+    market,
+    stamps,
+    teams,
+    drivers,
+    profileSource,
+    failures,
+  };
+}
+
+export async function updateMyGarageProfile(
+  body,
+  { token, signal } = {},
+) {
   if (USE_MOCK) {
     mockProfile = {
       ...mockProfile,
-      nickname: body.nickname,
-      bio: body.bio,
-      favoriteTeam:
-        mockTeams.find((team) => team.teamId === body.favoriteTeamId) ??
-        null,
-      favoriteDriver:
-        mockDrivers.find(
-          (driver) => driver.driverId === body.favoriteDriverId,
-        ) ?? null,
-      showMarketAssets: body.showMarketAssets,
+      ...Object.fromEntries(
+        Object.entries(body).filter(
+          ([key]) =>
+            ![
+              "favoriteTeamId",
+              "favoriteDriverId",
+            ].includes(key),
+        ),
+      ),
     };
+
+    if ("favoriteTeamId" in body) {
+      mockProfile.favoriteTeam =
+        mockTeams.find(
+          (team) =>
+            team.teamId === body.favoriteTeamId,
+        ) ?? null;
+    }
+
+    if ("favoriteDriverId" in body) {
+      mockProfile.favoriteDriver =
+        mockDrivers.find(
+          (driver) =>
+            driver.driverId === body.favoriteDriverId,
+        ) ?? null;
+    }
 
     return copy(mockProfile);
   }
 
-  return request("/api/me", {
+  return request("/me", {
     method: "PATCH",
+    signal,
     token,
     body: JSON.stringify(body),
   });
+}
+
+// 서버 이름을 기존 SVG·선택지 표기에 맞춥니다.
+export function displayName(name) {
+  return (
+    {
+      "샤를 르클레르": "샤를 르끌레르",
+      레이싱불스: "레이싱 불스",
+      레드불: "레드불 레이싱",
+    }[name] ?? name
+  );
+}
+
+export function toGarageProfile(profile) {
+  const defaultTeam = mockTeams.find(
+    (team) => team.teamId === "ferrari",
+  );
+
+  const defaultDriver = mockDrivers.find(
+    (driver) => driver.name === "루이스 해밀턴",
+  );
+
+  const team = profile.favoriteTeam ?? defaultTeam;
+  const driver = profile.favoriteDriver ?? defaultDriver;
+
+  return {
+    nickname: profile.nickname ?? "",
+    bio: profile.bio ?? "",
+    team: displayName(team?.name) ?? null,
+    driver: displayName(driver?.name) ?? null,
+    showAssets: profile.showMarketAssets ?? true,
+    avatarAssetId: profile.avatarAssetId,
+    avatarSrc: "",
+    teamRank: team?.championshipRank ?? null,
+    driverRank: driver?.championshipRank ?? null,
+  };
+}
+
+export function createProfilePatch(
+  draft,
+  profile,
+  { teams, drivers, profileSource },
+) {
+  const patch = {};
+
+  if (draft.nickname.trim() !== profile.nickname) {
+    patch.nickname = draft.nickname.trim();
+  }
+
+  if (draft.bio !== profile.bio) {
+    patch.bio = draft.bio;
+  }
+
+  if (draft.showAssets !== profile.showAssets) {
+    patch.showMarketAssets = draft.showAssets;
+  }
+
+  if (
+    draft.team !== profile.team ||
+    draft.driver !== profile.driver
+  ) {
+    if (profileSource === "fallback") {
+      throw new Error(
+        "서버 프로필을 불러온 후 팀·선수를 변경해 주세요.",
+      );
+    }
+
+    const team = teams.find(
+      (item) => displayName(item.name) === draft.team,
+    );
+
+    const driver = drivers.find(
+      (item) =>
+        displayName(item.name) === draft.driver &&
+        item.teamId === team?.teamId,
+    );
+
+    if (
+      (draft.team && !team) ||
+      (draft.driver && !driver)
+    ) {
+      throw new Error(
+        "팀·선수 정보를 다시 확인해 주세요.",
+      );
+    }
+
+    patch.favoriteTeamId = team?.teamId ?? null;
+    patch.favoriteDriverId = driver?.driverId ?? null;
+  }
+
+  return patch;
+}
+
+export function useMyGarageData({
+  enabled,
+  token,
+  season,
+}) {
+  const [result, setResult] = useState(() => ({
+    ...getMockGarageData(),
+    profileSource: USE_MOCK ? "mock" : "fallback",
+  }));
+
+  const [loading, setLoading] = useState(enabled);
+  const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
+
+  const retry = useCallback(() => {
+    setRevision((value) => value + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const controller = new AbortController();
+
+    async function load() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await getMyGarageData({
+          token,
+          season,
+          signal: controller.signal,
+        });
+
+        if (!controller.signal.aborted) {
+          setResult(data);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setError(error.message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => controller.abort();
+  }, [enabled, token, season, revision]);
+
+  return {
+    ...result,
+    loading,
+    error,
+    retry,
+  };
 }
