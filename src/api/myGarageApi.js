@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || "/api"
-).replace(/\/$/, "");
+).replace(/\/+$/, "").replace(/(?:\/api)?$/, "/api");
 
 // true: 목업만 사용
-// false 또는 미설정: API 우선, 조회 실패 시 목업 표시
+// false 또는 미설정: 자산과 스탬프는 조회에 성공한 값만 표시.
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 async function request(path, { token, ...options } = {}) {
@@ -138,7 +138,7 @@ const mockMarket = {
 
 const mockStamps = {
   season: 2026,
-  watchedCount: 5,
+  watchedCount: 0,
   totalRaces: 23,
   items: [],
 };
@@ -279,7 +279,7 @@ export async function getMyGarageData({
     failures.push("profile");
   }
 
-  let stamps = fallback.stamps;
+  let stamps = null;
 
   if (profileSource === "api") {
     try {
@@ -297,7 +297,7 @@ export async function getMyGarageData({
     failures.push("stamps");
   }
 
-  let market = fallback.market;
+  let market = null;
 
   if (marketResult.status === "fulfilled") {
     const value = marketResult.value;
@@ -501,6 +501,8 @@ export function useMyGarageData({
 }) {
   const [result, setResult] = useState(() => ({
     ...getMockGarageData(),
+    market: USE_MOCK ? mockMarket : null,
+    stamps: USE_MOCK ? mockStamps : null,
     profileSource: USE_MOCK ? "mock" : "fallback",
   }));
 

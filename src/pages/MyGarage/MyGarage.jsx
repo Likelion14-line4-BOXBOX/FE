@@ -500,10 +500,13 @@ export default function MyGarage({
   }));
 
   const market = garage.market;
-  const stampCount =
-    garage.stamps.watchedCount;
-  const totalRaces =
-    garage.stamps.totalRaces;
+  const returnRate =
+    market?.returnRate == null ? null : Number(market.returnRate);
+  const hasReturnRate = returnRate != null && Number.isFinite(returnRate);
+  const stampCount = garage.stamps?.watchedCount;
+  const totalRaces = garage.stamps?.totalRaces;
+  const hasStampData = Number.isInteger(stampCount) && stampCount >= 0
+    && Number.isInteger(totalRaces) && totalRaces >= stampCount;
 
   const current =
     editing ? draft : profile;
@@ -1047,6 +1050,12 @@ export default function MyGarage({
           <div className={styles.privateAssets}>
             비공개
           </div>
+        ) : !market ? (
+          <p className={styles.marketStatus} role="status">
+            {garage.loading
+              ? "자산을 불러오는 중입니다."
+              : "자산을 불러오지 못했습니다."}
+          </p>
         ) : (
           <div className={styles.marketStats}>
             <div>
@@ -1063,10 +1072,22 @@ export default function MyGarage({
             <div>
               <span>수익률</span>
               <strong
-                className={styles.positive}
+                className={
+                  hasReturnRate && returnRate > 0
+                    ? styles.positive
+                    : hasReturnRate && returnRate < 0
+                      ? styles.negative
+                      : undefined
+                }
+                aria-label={
+                  hasReturnRate && returnRate !== 0
+                    ? `수익률 ${returnRate.toFixed(1)}%`
+                    : undefined
+                }
               >
-                ▲{" "}
-                {market.returnRate ?? "—"}%
+                {hasReturnRate
+                  ? `${returnRate > 0 ? "▲ " : returnRate < 0 ? "▼ " : ""}${Math.abs(returnRate).toFixed(1)}%`
+                  : "—"}
               </strong>
             </div>
 
@@ -1087,16 +1108,25 @@ export default function MyGarage({
 
       <section
         className={styles.stampCard}
-        aria-label={`${totalRaces}개 중 ${stampCount}개 레이스 참여`}
+        aria-label={
+          hasStampData
+            ? `${totalRaces}개 중 ${stampCount}개 레이스 참여`
+            : "레이스 스탬프"
+        }
       >
-        <GarageImage
-          src={getImage(
-            "레이스 스탬프",
-            stampNumber,
-          )}
-          alt="레이스 스탬프"
-          className={styles.stampImage}
-        />
+        {hasStampData ? (
+          <GarageImage
+            src={getImage("레이스 스탬프", stampNumber)}
+            alt="레이스 스탬프"
+            className={styles.stampImage}
+          />
+        ) : (
+          <p className={styles.stampStatus} role="status">
+            {garage.loading
+              ? "레이스 스탬프를 불러오는 중입니다."
+              : "레이스 스탬프를 불러오지 못했습니다."}
+          </p>
+        )}
       </section>
 
       {editing && sheet && (
