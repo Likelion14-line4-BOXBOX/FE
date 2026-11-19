@@ -159,7 +159,7 @@ function DriverStocks({ stocks, roundId, showMockLinks }) {
     );
 }
 
-export default function RaceMarket() {
+export default function RaceMarket({ accessToken = null }) {
     const [searchParams] = useSearchParams();
     const [market, setMarket] = useState(null);
     const [failed, setFailed] = useState(false);
@@ -248,8 +248,8 @@ export default function RaceMarket() {
             </header>
 
             <div className={styles.content}>
-                {isMyTab && <RaceMarketMy isClosed={isClosed} />}
-                {isRankingTab && <RaceMarketRanking />}
+                {isMyTab && <RaceMarketMy isClosed={isClosed} accessToken={accessToken} roundId={market?.round?.roundId} season={market?.round?.season} />}
+                {isRankingTab && <RaceMarketRanking accessToken={accessToken} />}
 
                 {isDriverTab && (
                     <>

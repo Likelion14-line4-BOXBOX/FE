@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   useLocation,
   useMatch,
+  useNavigate,
 } from "react-router-dom";
 
 import BottomNav from "./components/common/BottomNav/BottomNav";
@@ -12,7 +14,8 @@ import Home from "./pages/Home/Home";
 import Messages from "./pages/Home/Messages";
 
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
-import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
+import Experience from "./pages/Experience/Experience";
+import { enterDemo, leaveDemo, readExperience, refreshDemo, saveExperience } from "./shared/demoAuth";
 
 import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
@@ -30,8 +33,47 @@ const GARAGE_PATHS = [
 ];
 
 function AppRoutes() {
-  // 회원 테스트 시 null을 MOCK_USER로 변경하세요.
-  const currentUser = MOCK_USER;
+  const [experience, setExperience] = useState(readExperience);
+  const navigate = useNavigate();
+  const currentUser = experience?.mode === "member" ? experience.user : null;
+  const accessToken = experience?.mode === "member" ? experience.accessToken : null;
+  const onLogin = () => navigate("/experience");
+
+  useEffect(() => {
+    if (experience?.mode !== "member") return;
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const refreshed = await refreshDemo(experience);
+        if (active) {
+          saveExperience(refreshed);
+          setExperience(refreshed);
+        }
+      } catch {
+        if (active) {
+          saveExperience(null);
+          setExperience(null);
+        }
+      }
+    }, Math.max(0, experience.expiresAt - Date.now() - 60000));
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [experience]);
+
+  async function onMember() {
+    const member = await enterDemo();
+    saveExperience(member);
+    setExperience(member);
+    navigate("/", { replace: true });
+  }
+
+  function onGuest() {
+    saveExperience({ mode: "guest" });
+    setExperience({ mode: "guest" });
+    navigate("/", { replace: true });
+    void leaveDemo().catch(() => {
+      // 비회원 화면에서는 access token을 전달하지 않는다.
+    });
+  }
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
@@ -81,6 +123,10 @@ function AppRoutes() {
     !isLiveChat &&
     (hideBottomNav || (isTeamRadio && view !== "home"));
 
+  if (!experience || pathname === "/experience") {
+    return <Experience onMember={onMember} onGuest={onGuest} />;
+  }
+
   return (
     <>
       <main
@@ -89,7 +135,7 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/"
-            element={<Home currentUser={currentUser} />}
+            element={<Home currentUser={currentUser} accessToken={accessToken} onLogin={onLogin} />}
           />
 
           <Route
@@ -99,37 +145,37 @@ function AppRoutes() {
 
           <Route
             path="/team-radio"
-            element={<TeamRadio currentUser={currentUser} />}
+            element={<TeamRadio currentUser={currentUser} onLogin={onLogin} />}
           />
 
           <Route
             path="/race-market"
-            element={<RaceMarket />}
+            element={<RaceMarket accessToken={accessToken} />}
           />
 
           <Route
             path="/race-market/drivers/:driverId"
-            element={<RaceMarketBuySell />}
+            element={<RaceMarketBuySell accessToken={accessToken} />}
           />
 
           <Route
             path="/race-market/users/:userId"
-            element={<RaceMarketUserProfile />}
+            element={<RaceMarketUserProfile accessToken={accessToken} />}
           />
 
           <Route
             path="/race-market/settlements/:roundId"
-            element={<RaceMarketSettlement />}
+            element={<RaceMarketSettlement accessToken={accessToken} />}
           />
 
           <Route
             path="/my-garage"
-            element={<MyGarage currentUser={currentUser} />}
+            element={<MyGarage currentUser={currentUser} onLogin={onLogin} />}
           />
 
           <Route
             path="/my-garage/radio"
-            element={<MyRadio currentUser={currentUser} />}
+            element={<MyRadio currentUser={currentUser} onLogin={onLogin} />}
           />
         </Routes>
       </main>
