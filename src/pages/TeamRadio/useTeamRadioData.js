@@ -151,18 +151,39 @@ function makeComment(item, postId) {
     updatedAt: iso(item.createdAt),
   };
 }
-// 홈과 팀 라디오에서 공유하는 게시글 상태입니다.
-// 현재는 목업이므로 새로고침하면 초기 데이터로 돌아갑니다.
+const postStorageKey = 'boxbox.teamRadio.posts.v1';
+const commentStorageKey = 'boxbox.teamRadio.comments.v1';
+
+function readSnapshot(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key));
+  } catch {
+    return null;
+  }
+}
+
+function saveSnapshot(key, snapshot) {
+  try {
+    localStorage.setItem(key, JSON.stringify(snapshot));
+  } catch {
+    // 저장 공간이 부족해도 현재 화면의 변경은 유지합니다.
+  }
+}
+
 let postSnapshot;
 const postListeners = new Set();
 
 function getPostSnapshot() {
   if (!postSnapshot) {
-    const boards = makeBoards();
-
-    postSnapshot = initialPosts.map((item) =>
-      makePost(item, boards),
-    );
+    const saved = readSnapshot(postStorageKey);
+    if (Array.isArray(saved)) {
+      postSnapshot = saved;
+    } else {
+      const boards = makeBoards();
+      postSnapshot = initialPosts.map((item) =>
+        makePost(item, boards),
+      );
+    }
   }
 
   return postSnapshot;
@@ -187,6 +208,7 @@ function setPostSnapshot(update) {
   if (Object.is(previous, next)) return;
 
   postSnapshot = next;
+  saveSnapshot(postStorageKey, next);
 
   postListeners.forEach((listener) => {
     listener();
@@ -197,14 +219,19 @@ const commentListeners = new Set();
 
 function getCommentSnapshot() {
   if (!commentSnapshot) {
-    commentSnapshot = Object.fromEntries(
-      initialPosts.map((item) => [
-        String(item.id),
-        (item.comments ?? []).map((entry) =>
-          makeComment(entry, String(item.id)),
-        ),
-      ]),
-    );
+    const saved = readSnapshot(commentStorageKey);
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+      commentSnapshot = saved;
+    } else {
+      commentSnapshot = Object.fromEntries(
+        initialPosts.map((item) => [
+          String(item.id),
+          (item.comments ?? []).map((entry) =>
+            makeComment(entry, String(item.id)),
+          ),
+        ]),
+      );
+    }
   }
 
   return commentSnapshot;
@@ -229,6 +256,7 @@ function setCommentSnapshot(update) {
   if (Object.is(previous, next)) return;
 
   commentSnapshot = next;
+  saveSnapshot(commentStorageKey, next);
 
   commentListeners.forEach((listener) => {
     listener();

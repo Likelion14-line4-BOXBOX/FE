@@ -718,7 +718,7 @@ export default function TeamRadio(props) {
                     key={message.id}
                   >
                     <p className={s.session}>
-                      {message.text}
+                      {message.text.replace(/^\s*\[데모\]\s*/, "")}
                     </p>
                     <p className={s.day}>
                       {formatSessionDate(
