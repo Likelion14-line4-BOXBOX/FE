@@ -5,6 +5,7 @@ import {
   Route,
   useLocation,
   useMatch,
+  useNavigate,
 } from "react-router-dom";
 
 import BottomNav from "./components/common/BottomNav/BottomNav";
@@ -13,6 +14,8 @@ import Home from "./pages/Home/Home";
 import Messages from "./pages/Home/Messages";
 
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
+import Experience from "./pages/Experience/Experience";
+import { enterDemo, leaveDemo, readExperience, refreshDemo, saveExperience } from "./shared/demoAuth";
 
 import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
@@ -35,54 +38,48 @@ const GARAGE_PATHS = [
   "/my-garage/radio",
 ];
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api")
-  .replace(/\/+$/, "")
-  .replace(/(?:\/api)?$/, "/api");
-
 function AppRoutes() {
-  const [accessToken] = useState(() =>
-    sessionStorage.getItem("boxbox_test_access_token"),
-  );
-  const [currentUser, setCurrentUser] = useState(null);
+  const [experience, setExperience] = useState(readExperience);
+  const navigate = useNavigate();
+  const currentUser = experience?.mode === "member" ? experience.user : null;
+  const accessToken = experience?.mode === "member" ? experience.accessToken : null;
+  const onLogin = () => navigate("/experience");
 
   useEffect(() => {
-    if (!accessToken) return;
-
-    const controller = new AbortController();
-
-    async function loadCurrentUser() {
+    if (experience?.mode !== "member") return;
+    let active = true;
+    const timer = window.setTimeout(async () => {
       try {
-        const response = await fetch(`${API_BASE}/me`, {
-          signal: controller.signal,
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const payload = await response.json();
-
-        if (!response.ok || !payload?.data?.userId) {
-          throw new Error(
-            payload?.error?.message || "로그인 정보를 확인하지 못했습니다.",
-          );
+        const refreshed = await refreshDemo(experience);
+        if (active) {
+          saveExperience(refreshed);
+          setExperience(refreshed);
         }
-
-        if (!controller.signal.aborted) {
-          setCurrentUser(payload.data);
-        }
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error("회원 조회 실패:", error.message);
+      } catch {
+        if (active) {
+          saveExperience(null);
+          setExperience(null);
         }
       }
-    }
+    }, Math.max(0, experience.expiresAt - Date.now() - 60000));
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [experience]);
 
-    loadCurrentUser();
-    return () => controller.abort();
-  }, [accessToken]);
+  async function onMember() {
+    const member = await enterDemo();
+    saveExperience(member);
+    setExperience(member);
+    navigate("/home", { replace: true });
+  }
 
-  const authenticatedToken = currentUser ? accessToken : undefined;
+  function onGuest() {
+    saveExperience({ mode: "guest" });
+    setExperience({ mode: "guest" });
+    navigate("/home", { replace: true });
+    void leaveDemo().catch(() => {
+      // 비회원 화면에서는 access token을 전달하지 않는다.
+    });
+  }
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
@@ -137,8 +134,8 @@ function AppRoutes() {
     !isRadioChat &&
     (hideBottomNav || (isTeamRadio && view !== "home"));
 
-  function handleLogin() {
-    window.alert("로그인 화면이 아직 연결되지 않았어요.");
+  if (!experience || pathname === "/" || pathname === "/experience") {
+    return <Experience onMember={onMember} onGuest={onGuest} />;
   }
 
   return (
@@ -146,14 +143,15 @@ function AppRoutes() {
       <main
         className={`content${showShadow ? " pageShadow" : ""}${isRadioChat ? " radioChatContent" : ""}`}
       >
-        <MarketAccessProvider currentUser={currentUser} onLogin={handleLogin}>
+        <MarketAccessProvider currentUser={currentUser} onLogin={onLogin}>
           <Routes>
             <Route
-              path="/"
+              path="/home"
               element={
                 <Home
                   currentUser={currentUser}
-                  accessToken={authenticatedToken}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
                 />
               }
             />
@@ -168,29 +166,30 @@ function AppRoutes() {
               element={
                 <TeamRadio
                   currentUser={currentUser}
-                  accessToken={authenticatedToken}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
                 />
               }
             />
 
             <Route
               path="/race-market"
-              element={<RaceMarket accessToken={authenticatedToken} />}
+              element={<RaceMarket accessToken={accessToken} />}
             />
 
             <Route
               path="/race-market/drivers/:driverId"
-              element={<RaceMarketBuySell accessToken={authenticatedToken} />}
+              element={<RaceMarketBuySell accessToken={accessToken} />}
             />
 
             <Route
               path="/race-market/users/:userId"
-              element={<RaceMarketUserProfile accessToken={authenticatedToken} />}
+              element={<RaceMarketUserProfile accessToken={accessToken} />}
             />
 
             <Route
               path="/race-market/settlements/:roundId"
-              element={<RaceMarketSettlement accessToken={authenticatedToken} />}
+              element={<RaceMarketSettlement accessToken={accessToken} />}
             />
 
             <Route
@@ -198,14 +197,15 @@ function AppRoutes() {
               element={
                 <MyGarage
                   currentUser={currentUser}
-                  accessToken={authenticatedToken}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
                 />
               }
             />
 
             <Route
               path="/my-garage/radio"
-              element={<MyRadio currentUser={currentUser} />}
+              element={<MyRadio currentUser={currentUser} onLogin={onLogin} />}
             />
           </Routes>
         </MarketAccessProvider>
