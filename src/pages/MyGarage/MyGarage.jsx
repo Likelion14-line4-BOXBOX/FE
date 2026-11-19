@@ -62,6 +62,24 @@ function writeVisibility(userId, value) {
   );
 }
 
+const TEAM_SELECTION_ORDER = [
+  "메르세데스",
+  "페라리",
+  "레드불 레이싱",
+  "맥라렌",
+  "레이싱 불스",
+  "알핀",
+  "하스",
+  "아우디",
+  "윌리엄스",
+  "애스턴 마틴",
+  "캐딜락",
+];
+
+const TEAM_SELECTION_INDEX = new Map(
+  TEAM_SELECTION_ORDER.map((name, index) => [name, index]),
+);
+
 const imageModules = import.meta.glob(
   "../../assets/images/mygarage/**/*.svg",
   {
@@ -496,17 +514,18 @@ export default function MyGarage({
   const photoReaderRef =
     useRef(null);
 
-  const teams = garage.teams.map((team) => ({
-    name: displayName(team.name),
-    drivers: garage.drivers
-      .filter(
-        (driver) =>
-          driver.teamId === team.teamId,
-      )
-      .map((driver) =>
-        displayName(driver.name),
-      ),
-  }));
+  const teams = garage.teams
+    .map((team) => ({
+      name: displayName(team.name),
+      drivers: garage.drivers
+        .filter((driver) => driver.teamId === team.teamId)
+        .map((driver) => displayName(driver.name)),
+    }))
+    .sort(
+      (a, b) =>
+        (TEAM_SELECTION_INDEX.get(a.name) ?? TEAM_SELECTION_ORDER.length) -
+        (TEAM_SELECTION_INDEX.get(b.name) ?? TEAM_SELECTION_ORDER.length),
+    );
 
   const market = garage.market;
   const returnRate =
@@ -531,12 +550,15 @@ export default function MyGarage({
   const selectionTeam =
     pendingTeam ?? draft.team;
 
-  const driverOptions =
-    teams.find(
-      (team) =>
-        team.name === selectionTeam,
-    )?.drivers ?? [];
+  const teamDrivers =
+    teams.find((item) => item.name === selectionTeam)?.drivers ?? [];
 
+  const driverOptions =
+    selectionTeam === "하스"
+      ? ["올리버 베어먼", "라파엘 카마라"].filter((name) =>
+          teamDrivers.includes(name),
+        )
+      : teamDrivers;
   const stampNumber = Math.min(
     23,
     Math.max(0, stampCount),
