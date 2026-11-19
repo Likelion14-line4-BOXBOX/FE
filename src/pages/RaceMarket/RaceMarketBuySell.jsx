@@ -5,6 +5,9 @@ import minusIcon from "../../assets/images/racemarket/minus.svg";
 import plusIcon from "../../assets/images/racemarket/plus.svg";
 import { drivers, getMockPrice } from "./raceMarketMock";
 import styles from "./RaceMarketBuySell.module.scss";
+import { useMarketAccess } from "./marketAccess";
+import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
+import backButtonIcon from "../../assets/images/racemarket/back-button.svg";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -337,6 +340,14 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
         ? selling ? account.shares : Math.floor(account.cash / stock.currentPrice)
         : 0;
     const orderQuantity = Math.min(quantity, limit, 2_147_483_647);
+    const [completedOrder, setCompletedOrder] = useState("");
+    const dialogRef = useRef(null);
+
+    useEffect(() => {
+        if (completedOrder && !dialogRef.current?.open) {
+            dialogRef.current?.showModal();
+        }
+    }, [completedOrder]);
 
     async function submit() {
         if (submitting.current) return;
@@ -346,38 +357,60 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
         setBusy(true);
         setMessage("");
 
+        let execution = pending;
+        let orderRequested = false;
+
         try {
-            if (!pending) {
+            if (!execution) {
                 const { data: quote } = await requestMarket(`${path}/quotes`, {
                     accessToken,
-                    body: { driverId, side, quantity: orderQuantity },
+                    body: {
+                        driverId,
+                        side,
+                        quantity: orderQuantity,
+                    },
                 });
 
-                setPending({ quote, key: crypto.randomUUID() });
-                return;
+                execution = {
+                    quote,
+                    key: crypto.randomUUID(),
+                };
+                setPending(execution);
             }
+
+            orderRequested = true;
 
             const { data: order } = await requestMarket(`${path}/orders`, {
                 accessToken,
-                orderKey: pending.key,
-                body: { quoteId: pending.quote.quoteId },
+                orderKey: execution.key,
+                body: { quoteId: execution.quote.quoteId },
             });
 
-            setAccount({ cash: order.cashBalance, shares: order.holdingQuantity });
+            setAccount({
+                cash: order.cashBalance,
+                shares: order.holdingQuantity,
+            });
             setPending(null);
             setUncertain(false);
             setQuantity(1);
-            setMessage(`${format(order.quantity)}주 ${order.type === "SELL" ? "매도" : "매수"} 완료`);
+            setMessage("");
+            setCompletedOrder(
+                order.type === "SELL" ? "매도 완료!" : "매수 완료!",
+            );
             onExecuted(order);
         } catch (error) {
-            const unknownResult = pending && (
-                !error.code || error.status >= 500 || error.status === 429
+            const unknownResult = orderRequested && (
+                !error.code
+                || error.status >= 500
+                || error.status === 429
                 || (uncertain && [401, 403].includes(error.status))
             );
 
             if (unknownResult) {
                 setUncertain(true);
-                setMessage("주문 결과를 확인하지 못했어요. 같은 주문의 결과를 다시 확인해 주세요.");
+                setMessage(
+                    "주문 결과를 확인하지 못했어요. 같은 주문의 결과를 다시 확인해 주세요.",
+                );
             } else {
                 setPending(null);
                 setUncertain(false);
@@ -389,8 +422,19 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
         }
     }
 
-    let buttonLabel = stock.tradable ? "견적 받기" : "거래 마감";
-    if (pending) buttonLabel = "이 견적으로 주문";
+    const estimatedTotal = orderQuantity * stock.currentPrice;
+
+    let buttonLabel = `${format(orderQuantity)}주 ${selling ? "팔기" : "사기"} · 예상 총 ${format(estimatedTotal)}`;
+
+    if (!account) {
+        buttonLabel = "보유 자산 확인 중…";
+    } else if (orderQuantity < 1) {
+        buttonLabel = selling
+            ? "매도할 보유 주식이 없어요"
+            : "주문 가능 코인이 부족해요";
+    }
+
+    if (!stock.tradable) buttonLabel = "거래 마감";
     if (uncertain) buttonLabel = "같은 주문 결과 다시 확인";
     if (busy) buttonLabel = "처리 중…";
 
@@ -414,15 +458,14 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
                 <strong>{account ? format(account.cash) : "—"}</strong>
             </div>
 
-            {pending && (
-                <p className={styles.notice} role="status">
-                    <img src={infoIcon} alt="" />
-                    <span>
-                        {format(pending.quote.quantity)}주 · 견적 총액{" "}
-                        {format(pending.quote.totalAmount)} 코인 · 유효기간 5초
-                    </span>
-                </p>
-            )}
+            <p className={styles.notice}>
+                <img src={infoIcon} alt="" />
+                <span>
+                    {selling
+                        ? "매도 금액은 체결 시점의 견적에 따라 정해져요. 매도 후 보유 수량과 레이스코인에 반영됩니다."
+                        : "매수 금액은 체결 시점의 견적에 따라 정해져요. 레이스 결과에 따른 정산가는 시작 가격을 기준으로 계산합니다."}
+                </span>
+            </p>
 
             <button
                 type="button"
@@ -432,12 +475,6 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
             >
                 {buttonLabel}
             </button>
-
-            {pending && !uncertain && (
-                <button type="button" disabled={busy} onClick={() => setPending(null)}>
-                    견적 취소
-                </button>
-            )}
 
             {message && <p role="status">{message}</p>}
 
@@ -452,19 +489,42 @@ function LiveOrder({ roundId, stock, accessToken, onExecuted }) {
                     보유 자산 다시 조회
                 </button>
             )}
+
+            <dialog
+                ref={dialogRef}
+                className={styles.dialog}
+                aria-labelledby="live-order-result-title"
+                onClose={() => setCompletedOrder("")}
+            >
+                <div aria-hidden="true">🏎️</div>
+                <h2 id="live-order-result-title">{completedOrder}</h2>
+                <form method="dialog">
+                    <button type="submit">확인</button>
+                </form>
+            </dialog>
         </section>
     );
 }
 
 function DriverDetail({ stock, isMock, history, retryLive, children }) {
+    const { isAuthenticated, onLogin } = useMarketAccess();
+    const [showLoginGuide, setShowLoginGuide] = useState(false);
     const { driver, baseRank, startingPrice, currentPrice, changeRate, settlementRows } = stock;
     const portrait = getPortrait(driver.name);
+
+    if (showLoginGuide && !isAuthenticated) {
+        return <LoginGuide onLogin={onLogin} />;
+    }
 
     return (
         <div className={styles.page}>
             <header className={styles.header}>
-                <Link to="/race-market" className={styles.back} aria-label="드라이버 목록으로 돌아가기">
-                    <span aria-hidden="true">‹</span>
+                <Link
+                    to="/race-market"
+                    className={styles.back}
+                    aria-label="드라이버 목록으로 돌아가기"
+                >
+                    <img src={backButtonIcon} alt="" />
                 </Link>
                 <h1>{driver.name}</h1>
             </header>
@@ -540,7 +600,19 @@ function DriverDetail({ stock, isMock, history, retryLive, children }) {
                 </table>
             </section>
 
-            {children}
+            {isAuthenticated ? (
+                children
+            ) : (
+                <section className={styles.loginOrder} aria-label="로그인 안내">
+                    <button
+                        type="button"
+                        className={`${styles.submit} ${styles.buy} ${styles.loginButton}`}
+                        onClick={() => setShowLoginGuide(true)}
+                    >
+                        로그인 후 매수하기
+                    </button>
+                </section>
+            )}
         </div>
     );
 }

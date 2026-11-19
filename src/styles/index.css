@@ -6,9 +6,11 @@
 
 html,
 body {
-  margin: 0;
-  background: #fff;
-  font-family: "Pretendard", sans-serif;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: #fff;
+    font-family: "Pretendard", sans-serif;
 }
 
 button,
@@ -19,27 +21,34 @@ select {
 }
 
 #root {
-  width: 402px;
-  height: 874px;
-  max-width: 100vw;
-  max-height: 100svh;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #fff;
+    width: 100%;
+    max-width: 402px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+    isolation: isolate;
 
-  position: relative;
-  isolation: isolate;
-  --app-height: min(874px, 100svh);
-  --bottom-nav-height: 88px;
+    --app-height: 100vh;
+    --bottom-nav-height: 88px;
+}
+
+@supports (height: 100dvh) {
+    #root {
+        --app-height: 100dvh;
+    }
 }
 
 .content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: none;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
 }
 
 #root:has(.radioChatContent) {
