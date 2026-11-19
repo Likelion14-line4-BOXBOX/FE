@@ -21,11 +21,17 @@ import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
 import { RaceMarketUserProfile } from "./pages/RaceMarket/RaceMarketRanking";
 import { RaceMarketSettlement } from "./pages/RaceMarket/RaceMarketMy";
+import { MarketAccessProvider } from "./pages/RaceMarket/MarketAccessContext";
 
 import MyGarage from "./pages/MyGarage/MyGarage";
 import MyRadio from "./pages/MyGarage/MyRadio";
 
-const RADIO_FOCUSED_VIEWS = ["post", "write", "search", "chat"];
+const RADIO_FOCUSED_VIEWS = [
+  "post",
+  "write",
+  "search",
+  "chat",
+];
 
 const GARAGE_PATHS = [
   "/my-garage",
@@ -79,14 +85,25 @@ function AppRoutes() {
   const params = new URLSearchParams(search);
   const view = params.get("view") || "home";
 
-  const driverDetail = useMatch("/race-market/drivers/:driverId");
-  const settlementDetail = useMatch("/race-market/settlements/:roundId");
-  const rankingProfile = useMatch("/race-market/users/:userId");
+  const driverDetail = useMatch(
+    "/race-market/drivers/:driverId",
+  );
+  const settlementDetail = useMatch(
+    "/race-market/settlements/:roundId",
+  );
+  const rankingProfile = useMatch(
+    "/race-market/users/:userId",
+  );
 
-  const isAuthenticated = Boolean(currentUser?.userId);
-  const isTeamRadio = pathname === "/team-radio";
-  const isMessages = pathname === "/messages";
-  const isGarageRadio = pathname === "/my-garage/radio";
+  const isAuthenticated = Boolean(
+    currentUser?.userId,
+  );
+  const isTeamRadio =
+    pathname === "/team-radio";
+  const isMessages =
+    pathname === "/messages";
+  const isGarageRadio =
+    pathname === "/my-garage/radio";
 
   const isGarageEditing =
     pathname === "/my-garage" &&
@@ -96,31 +113,25 @@ function AppRoutes() {
     !isAuthenticated &&
     GARAGE_PATHS.includes(pathname);
 
+  const isRadioChat = isTeamRadio && view === "chat";
   const isRadioFocused =
-    isTeamRadio &&
-    RADIO_FOCUSED_VIEWS.includes(view);
+    isTeamRadio && RADIO_FOCUSED_VIEWS.includes(view);
 
   const isMarketDetail = Boolean(
     driverDetail ||
-    settlementDetail ||
-    rankingProfile,
+      settlementDetail ||
+      rankingProfile,
   );
 
   const hideBottomNav =
     isMessages ||
     isMarketDetail ||
     isRadioFocused ||
-    (!isGarageLoginGuide && (isGarageEditing || isGarageRadio));
-
-  const race = params.get("race");
-
-  const isLiveChat =
-    isTeamRadio &&
-    view === "chat" &&
-    (!race || race === "mexico");
+    (!isGarageLoginGuide &&
+      (isGarageEditing || isGarageRadio));
 
   const showShadow =
-    !isLiveChat &&
+    !isRadioChat &&
     (hideBottomNav || (isTeamRadio && view !== "home"));
 
   if (!experience || pathname === "/experience") {
@@ -130,54 +141,74 @@ function AppRoutes() {
   return (
     <>
       <main
-        className={`content${showShadow ? " pageShadow" : ""}`}
+        className={`content${showShadow ? " pageShadow" : ""}${isRadioChat ? " radioChatContent" : ""}`}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={<Home currentUser={currentUser} accessToken={accessToken} onLogin={onLogin} />}
-          />
+        <MarketAccessProvider currentUser={currentUser} onLogin={onLogin}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Home
+                  currentUser={currentUser}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
+                />
+              }
+            />
 
-          <Route
-            path="/messages"
-            element={<Messages />}
-          />
+            <Route
+              path="/messages"
+              element={<Messages />}
+            />
 
-          <Route
-            path="/team-radio"
-            element={<TeamRadio currentUser={currentUser} onLogin={onLogin} />}
-          />
+            <Route
+              path="/team-radio"
+              element={
+                <TeamRadio
+                  currentUser={currentUser}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
+                />
+              }
+            />
 
-          <Route
-            path="/race-market"
-            element={<RaceMarket accessToken={accessToken} />}
-          />
+            <Route
+              path="/race-market"
+              element={<RaceMarket accessToken={accessToken} />}
+            />
 
-          <Route
-            path="/race-market/drivers/:driverId"
-            element={<RaceMarketBuySell accessToken={accessToken} />}
-          />
+            <Route
+              path="/race-market/drivers/:driverId"
+              element={<RaceMarketBuySell accessToken={accessToken} />}
+            />
 
-          <Route
-            path="/race-market/users/:userId"
-            element={<RaceMarketUserProfile accessToken={accessToken} />}
-          />
+            <Route
+              path="/race-market/users/:userId"
+              element={<RaceMarketUserProfile accessToken={accessToken} />}
+            />
 
-          <Route
-            path="/race-market/settlements/:roundId"
-            element={<RaceMarketSettlement accessToken={accessToken} />}
-          />
+            <Route
+              path="/race-market/settlements/:roundId"
+              element={<RaceMarketSettlement accessToken={accessToken} />}
+            />
 
-          <Route
-            path="/my-garage"
-            element={<MyGarage currentUser={currentUser} onLogin={onLogin} />}
-          />
+            <Route
+              path="/my-garage"
+              element={
+                <MyGarage
+                  currentUser={currentUser}
+                  accessToken={accessToken}
+                  onLogin={onLogin}
+                />
+              }
+            />
 
-          <Route
-            path="/my-garage/radio"
-            element={<MyRadio currentUser={currentUser} onLogin={onLogin} />}
-          />
-        </Routes>
+            <Route
+              path="/my-garage/radio"
+              element={<MyRadio currentUser={currentUser} onLogin={onLogin} />}
+            />
+          </Routes>
+        </MarketAccessProvider>
       </main>
 
       {!hideBottomNav && <BottomNav />}

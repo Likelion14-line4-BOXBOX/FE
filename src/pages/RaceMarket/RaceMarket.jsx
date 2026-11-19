@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../../assets/images/racemarket/race-market-logo.svg";
 import increaseIcon from "../../assets/images/racemarket/red-increase.svg";
 import styles from "./RaceMarket.module.scss";
 import { RaceMarketMy } from "./RaceMarketMy";
 import { RaceMarketRanking } from "./RaceMarketRanking";
 import { drivers, getMockPrice } from "./raceMarketMock";
+import LoginGuide from "../../components/common/LoginGuide/LoginGuide";
+import { useMarketAccess } from "./marketAccess";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -32,7 +34,7 @@ const numberFormat = new Intl.NumberFormat("ko-KR");
 const rateFormat = new Intl.NumberFormat("ko-KR", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 2,
-    signDisplay: "exceptZero",
+    signDisplay: "auto",
 });
 
 async function requestMarket(path, signal) {
@@ -100,7 +102,9 @@ function formatRemaining(milliseconds) {
     ].filter(Boolean).join(" ");
 }
 
-function DriverStocks({ stocks, roundId, showMockLinks }) {
+function DriverStocks({ stocks, roundId }) {
+    const navigate = useNavigate();
+
     if (stocks.length === 0) {
         return <p className={styles.guide}>공개된 드라이버 종목이 없습니다.</p>;
     }
@@ -115,28 +119,35 @@ function DriverStocks({ stocks, roundId, showMockLinks }) {
                     <th scope="col">누적 구매 수</th>
                 </tr>
             </thead>
-            <tbody>
+                        <tbody>
                 {stocks.map(({ driver, baseRank, currentPrice, changeRate, totalBuyQuantity }) => {
                     const path = `/race-market/drivers/${encodeURIComponent(driver.driverId)}`;
                     const detailUrl = roundId
                         ? `${path}?${new URLSearchParams({ roundId })}`
                         : path;
+                    const detailState = roundId
+                        ? { driverName: driver.name }
+                        : undefined;
 
                     return (
-                        <tr key={driver.driverId}>
+                        <tr
+                            key={driver.driverId}
+                            className={styles.stockRow}
+                            onClick={(event) => {
+                                if (event.target.closest("a")) return;
+                                navigate(detailUrl, { state: detailState });
+                            }}
+                        >
                             <td className={styles.rank}>P{baseRank}</td>
                             <th scope="row" className={styles.driver}>
-                                {roundId || showMockLinks ? (
-                                    <Link
-                                        className={styles.driverLink}
-                                        to={detailUrl}
-                                        state={roundId ? { driverName: driver.name } : undefined}
-                                    >
-                                        {driver.name}
-                                    </Link>
-                                ) : (
-                                    driver.name
-                                )}
+                                <Link
+                                    className={styles.driverLink}
+                                    to={detailUrl}
+                                    state={detailState}
+                                    aria-label={`${driver.name} 종목 상세 보기`}
+                                >
+                                    {driver.name}
+                                </Link>
                                 <small>{driver.teamName}</small>
                             </th>
                             <td className={styles.quote}>
@@ -171,6 +182,7 @@ export default function RaceMarket({ accessToken = null }) {
     const isRankingTab = tab === "ranking";
     const isDriverTab = !isMyTab && !isRankingTab;
     const previewClosed = searchParams.get("preview") === "closed";
+    const { isAuthenticated, onLogin } = useMarketAccess();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -248,8 +260,21 @@ export default function RaceMarket({ accessToken = null }) {
             </header>
 
             <div className={styles.content}>
-                {isMyTab && <RaceMarketMy isClosed={isClosed} accessToken={accessToken} roundId={market?.round?.roundId} season={market?.round?.season} />}
-                {isRankingTab && <RaceMarketRanking accessToken={accessToken} />}
+                {isMyTab && (
+                    isAuthenticated ? (
+                        <RaceMarketMy
+                            isClosed={isClosed}
+                            accessToken={accessToken}
+                            roundId={market?.round?.roundId}
+                            season={market?.round?.season}
+                        />
+                    ) : (
+                        <LoginGuide onLogin={onLogin} />
+                    )
+                )}
+                {isRankingTab && (
+                    <RaceMarketRanking accessToken={accessToken} />
+                )}
 
                 {isDriverTab && (
                     <>
@@ -286,22 +311,24 @@ export default function RaceMarket({ accessToken = null }) {
                                     </div>
                                 </section>
 
-                                {isClosed ? (
+                                                                {isClosed ? (
                                     <section className={styles.notice} aria-label="거래 마감 안내">
-                                        <strong>이 라운드의 주문이 마감됐어요.</strong>
-                                        <p>정산 결과는 레이스 종료 24시간 뒤부터 공개됩니다.</p>
+                                        <strong>거래가 마감되어 지금은 주문할 수 없어요.</strong>
+                                        <p>
+                                            종목 정보는 계속 확인할 수 있으며,
+                                            정산 결과는 레이스 종료 24시간 뒤부터 공개됩니다.
+                                        </p>
                                     </section>
                                 ) : (
                                     <p className={styles.guide}>
-                                        시작 가격은 기준 순위에 따라 정해지며,
-                                        본 레이스 시작 1시간 전에 거래가 마감됩니다.
+                                        시작 가격은 전 레이스 기준 순위이며, 
+                                        본 레이스 한 시간 전 마켓을 닫습니다.
                                     </p>
                                 )}
 
                                 <DriverStocks
                                     stocks={stocks}
                                     roundId={failed ? undefined : round.roundId}
-                                    showMockLinks={failed && isOpen}
                                 />
                             </>
                         )}

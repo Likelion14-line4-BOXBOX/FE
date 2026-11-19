@@ -339,7 +339,6 @@
 }
 
 .calculation {
-    margin-top: 10px;
     padding: 14px;
     border-radius: 10px;
     background: var(--gray-50);
@@ -397,4 +396,27 @@
 .loss {
     color: var(--blue-600);
     font-weight: 700;
+}
+
+.breakdown {
+    .stock {
+        border: 0;
+        margin-block: 0;
+    }
+
+    .stock + .stock {
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .stock > .stockSummary {
+        border: 0;
+    }
+
+    .stock[open] {
+        padding-bottom: 12px;
+    }
+
+    .stock > .calculation {
+        border-top: 0;
+    }
 }

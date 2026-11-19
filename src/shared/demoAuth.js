@@ -1,4 +1,6 @@
-const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
+  .replace(/\/+$/, "")
+  .replace(/(?:\/api)?$/, "/api");
 const storageKey = "boxbox.experience.v1";
 
 export function readExperience() {
