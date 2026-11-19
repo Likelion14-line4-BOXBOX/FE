@@ -48,8 +48,6 @@ function toViewProfile(profile) {
     showAssets: profile.showMarketAssets,
     avatarAssetId: profile.avatarAssetId,
 
-    // avatarAssetIdと画像の対応が未確定なので、
-    // APIモードでは既存UIの頭文字表示を使います。
     avatarSrc: "",
   };
 }
