@@ -18,6 +18,7 @@ import initialProfilePhoto from "../../assets/images/mygarage/프로필사진.sv
 
 import {
   saveGarageProfile,
+  useGarageProfile,
 } from "../../shared/garageProfile";
 
 import {
@@ -427,11 +428,17 @@ export default function MyGarage({
   const cachedVisibility =
     readVisibility(visibilityUserId);
 
+  const garageProfile = useGarageProfile();
+
   const mappedProfile =
     toGarageProfile(garage.profile);
 
   const serverProfile = {
     ...mappedProfile,
+    avatarSrc:
+      currentUser?.userId && garageProfile.userId === currentUser.userId
+        ? garageProfile.avatarSrc
+        : mappedProfile.avatarSrc,
     nickname: DEFAULT_NICKNAME,
     bio: DEFAULT_BIO,
     team:
@@ -690,7 +697,7 @@ export default function MyGarage({
       setDraft(next);
 
       try {
-        saveGarageProfile(next);
+        saveGarageProfile({ ...next, userId: currentUser?.userId });
       } catch {
         // 서버 저장과 로컬 캐시는 분리
       }
