@@ -7,7 +7,7 @@ import {
 import { useSearchParams } from "react-router-dom";
 
 import TeamRadioView from "./TeamRadioView";
-import useTeamRadioData from "./useTeamRadioData";
+import { formatChatCountdown } from "./chatSessionModel";
 import { createRadioApi } from "./radioApi";
 
 import LoginRequiredModal from "../../components/common/LoginRequiredModal/LoginRequiredModal";
@@ -16,8 +16,6 @@ import reportSiren from "../../assets/images/teamradio/🚨.svg";
 import useRadioChat, {
   CHAT_API_ENABLED,
 } from "./useRadioChat";
-import useChatPreview from "./useChatPreview";
-import { useGarageProfile } from "../../shared/garageProfile";
 
 import {
   Asset,
@@ -29,7 +27,7 @@ import {
 
 import {
   formatChatTime,
-  formatKoreanTime,
+  formatRacePeriod,
   formatSessionDate,
   REPORT_REASONS,
   toReportBody,
@@ -137,79 +135,18 @@ function ReportActions({
   );
 }
 
-function remaining(value, now) {
-  const target = Date.parse(value);
-
-  if (!Number.isFinite(target)) {
-    return "일정 미정";
-  }
-
-  const minutes = Math.max(
-    0,
-    Math.ceil((target - now) / 60000),
-  );
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-
-  return [
-    days ? `${days}일` : "",
-    hours ? `${hours}시간` : "",
-    `${minutes % 60}분`,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
 export default function TeamRadio(props) {
   const [params, setParams] = useSearchParams();
   const { onSendMessage, onLogin } = props;
-  const garageProfile = useGarageProfile();
-
-  const requestedPreview = import.meta.env.DEV
-    ? params.get("preview")
-    : null;
-
-  const previewMode = ["live", "closed"].includes(
-    requestedPreview,
-  )
-    ? requestedPreview
-    : null;
-
   const view = params.get("view") || "home";
-  const chatView =
-    view === "chat" || Boolean(previewMode);
-  const lobbyView =
-    !previewMode &&
-    view === "home" &&
-    params.get("tab") === "chat";
+  const chatView = view === "chat";
+  const lobbyView = view === "home" && params.get("tab") === "chat";
 
-  const realChat = useRadioChat({
-    enabled:
-      !previewMode &&
-      CHAT_API_ENABLED &&
-      (chatView || lobbyView),
-    selectedRoomId:
-      chatView && !previewMode
-        ? params.get("race")
-        : null,
+  const chat = useRadioChat({
+    enabled: CHAT_API_ENABLED && (chatView || lobbyView),
+    selectedRoomId: chatView ? params.get("race") : null,
     accessToken: props.accessToken,
     currentUser: props.currentUser,
-  });
-
-  const previewChat = useChatPreview({
-    mode: previewMode,
-    nickname:
-      garageProfile.nickname ||
-      props.currentUser?.nickname ||
-      "해머타임기원",
-  });
-
-  const chat = previewMode
-    ? previewChat
-    : realChat;
-
-  const mockRadio = useTeamRadioData({
-    currentUser: chat.currentUser,
   });
 
   const accessToken =
@@ -240,16 +177,8 @@ export default function TeamRadio(props) {
   // 기존 신고 UI는 유지하고 데이터 처리만 연결
   const radio = {
     isAuthenticated: Boolean(chat.currentUser),
-    report: previewMode
-      ? mockRadio.report
-      : (target, reason, description) =>
-          reportApi.report(
-            toReportBody(
-              target,
-              reason,
-              description,
-            ),
-          ),
+    report: (target, reason, description) =>
+      reportApi.report(toReportBody(target, reason, description)),
   };
 
   const [input, setInput] = useState("");
@@ -272,9 +201,7 @@ export default function TeamRadio(props) {
   const shouldFollowRef = useRef(true);
   const operationRef = useRef(false);
 
-  const roomId = previewMode
-    ? "preview-mexico"
-    : params.get("race");
+  const roomId = params.get("race");
 
   const room = chat.races.find(
     (item) => item.id === roomId,
@@ -287,6 +214,11 @@ export default function TeamRadio(props) {
     chat.races.find(
       (item) => item.status === "SCHEDULED",
     );
+
+  const activeRoomCountdown = formatChatCountdown(
+    activeRoom?.status === "LIVE" ? activeRoom.closesAt : activeRoom?.opensAt,
+    chat.clock,
+  );
 
   const archivedRooms = chat.races.filter(
     (item) => item.status === "ARCHIVED",
@@ -316,7 +248,6 @@ export default function TeamRadio(props) {
       page.style.setProperty(
         "--chat-height",
         `${Math.min(
-          874,
           content.clientHeight,
           window.visualViewport?.height ||
             window.innerHeight,
@@ -461,6 +392,9 @@ export default function TeamRadio(props) {
   }
 
   function openRoom(id) {
+    const target = chat.races.find((item) => item.id === id);
+    if (target?.status !== "LIVE" && target?.status !== "ARCHIVED") return;
+
     setInput("");
     setMenu(null);
     setError("");
@@ -541,12 +475,19 @@ export default function TeamRadio(props) {
     }
   }
 
-  // 기존 게시판 화면 유지
-  if (
-    (!CHAT_API_ENABLED && !previewMode) ||
-    (!chatView && !lobbyView)
-  ) {
+  if (!chatView && !lobbyView) {
     return <TeamRadioView {...props} />;
+  }
+
+  if (!CHAT_API_ENABLED) {
+    return (
+      <section className={s.page}>
+        <p role="status">채팅 연결이 활성화되지 않았습니다.</p>
+        <button type="button" onClick={() => setParams({ tab: "board" })}>
+          게시판으로 돌아가기
+        </button>
+      </section>
+    );
   }
 
   return (
@@ -623,17 +564,12 @@ export default function TeamRadio(props) {
                   </span>
                 )}
 
-                <small>
-                  {activeRoom.status === "LIVE"
-                    ? "종료까지"
-                    : "오픈까지"}{" "}
-                  {remaining(
-                    activeRoom.status === "LIVE"
-                      ? activeRoom.closesAt
-                      : activeRoom.opensAt,
-                    chat.clock,
-                  )}
-                </small>
+                {activeRoomCountdown && (
+                  <small>
+                    {activeRoom.status === "LIVE" ? "종료까지" : "오픈까지"}{" "}
+                    {activeRoomCountdown}
+                  </small>
+                )}
               </div>
 
               <h2>{activeRoom.title}</h2>
@@ -657,7 +593,7 @@ export default function TeamRadio(props) {
             <p className={s.chatEnded}>
               {chat.loading
                 ? "채팅방을 불러오는 중입니다."
-                : "현재 운영 중인 채팅방이 없습니다."}
+                : chat.error || "현재 운영 중인 채팅방이 없습니다."}
             </p>
           )}
 
@@ -683,14 +619,10 @@ export default function TeamRadio(props) {
                 </span>
 
                 <span>
-                  {item.weekendStartsAt &&
-                  item.weekendEndsAt
-                    ? `${formatKoreanTime(
-                        item.weekendStartsAt,
-                      )} ~ ${formatKoreanTime(
-                        item.weekendEndsAt,
-                      )}`
-                    : ""}
+                  {formatRacePeriod(
+                    item.weekendStartsAt,
+                    item.weekendEndsAt,
+                  )}
                 </span>
               </button>
             ))}
@@ -730,10 +662,7 @@ export default function TeamRadio(props) {
                       />
                       <span>
                         종료까지{" "}
-                        {remaining(
-                          room.closesAt,
-                          chat.clock,
-                        )}
+                        {formatChatCountdown(room.closesAt, chat.clock)}
                       </span>
                     </>
                   ) : (
@@ -889,17 +818,7 @@ export default function TeamRadio(props) {
                             )
                           ) : (
                             <ReportActions
-                              recipient={
-                                message.sender ??
-                                (previewMode
-                                  ? {
-                                      userId:
-                                        "preview-other",
-                                      nickname:
-                                        message.nickname,
-                                    }
-                                  : null)
-                              }
+                              recipient={message.sender}
                               onSendMessage={
                                 sendPrivateMessage
                               }
@@ -925,11 +844,10 @@ export default function TeamRadio(props) {
                   ? "채팅을 불러오는 중입니다."
                   : room?.status === "ARCHIVED"
                     ? "라이브 채팅이 종료되었습니다."
+                    : room?.status === "SCHEDULED"
+                    ? "아직 채팅방이 열리지 않았어요."
                     : !chat.currentUser
                       ? "로그인 후 이용 가능합니다."
-                      : room?.status ===
-                          "SCHEDULED"
-                        ? "아직 채팅방이 열리지 않았어요."
                         : "현재 메시지를 전송할 수 없는 방입니다."}
               </p>
             )}

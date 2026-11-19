@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -12,7 +13,6 @@ import Home from "./pages/Home/Home";
 import Messages from "./pages/Home/Messages";
 
 import TeamRadio from "./pages/TeamRadio/TeamRadio";
-import { MOCK_USER } from "./pages/TeamRadio/useTeamRadioData";
 
 import RaceMarket from "./pages/RaceMarket/RaceMarket";
 import RaceMarketBuySell from "./pages/RaceMarket/RaceMarketBuySell";
@@ -29,9 +29,54 @@ const GARAGE_PATHS = [
   "/my-garage/radio",
 ];
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api")
+  .replace(/\/+$/, "")
+  .replace(/(?:\/api)?$/, "/api");
+
 function AppRoutes() {
-  // 회원 테스트 시 null을 MOCK_USER로 변경하세요.
-  const currentUser = MOCK_USER;
+  const [accessToken] = useState(() =>
+    sessionStorage.getItem("boxbox_test_access_token"),
+  );
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const controller = new AbortController();
+
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch(`${API_BASE}/me`, {
+          signal: controller.signal,
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = await response.json();
+
+        if (!response.ok || !payload?.data?.userId) {
+          throw new Error(
+            payload?.error?.message || "로그인 정보를 확인하지 못했습니다.",
+          );
+        }
+
+        if (!controller.signal.aborted) {
+          setCurrentUser(payload.data);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("회원 조회 실패:", error.message);
+        }
+      }
+    }
+
+    loadCurrentUser();
+    return () => controller.abort();
+  }, [accessToken]);
+
+  const authenticatedToken = currentUser ? accessToken : undefined;
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
@@ -54,9 +99,9 @@ function AppRoutes() {
     !isAuthenticated &&
     GARAGE_PATHS.includes(pathname);
 
+  const isRadioChat = isTeamRadio && view === "chat";
   const isRadioFocused =
-    isTeamRadio &&
-    RADIO_FOCUSED_VIEWS.includes(view);
+    isTeamRadio && RADIO_FOCUSED_VIEWS.includes(view);
 
   const isMarketDetail = Boolean(
     driverDetail ||
@@ -70,26 +115,24 @@ function AppRoutes() {
     isRadioFocused ||
     (!isGarageLoginGuide && (isGarageEditing || isGarageRadio));
 
-  const race = params.get("race");
-
-  const isLiveChat =
-    isTeamRadio &&
-    view === "chat" &&
-    (!race || race === "mexico");
-
   const showShadow =
-    !isLiveChat &&
+    !isRadioChat &&
     (hideBottomNav || (isTeamRadio && view !== "home"));
 
   return (
     <>
       <main
-        className={`content${showShadow ? " pageShadow" : ""}`}
+        className={`content${showShadow ? " pageShadow" : ""}${isRadioChat ? " radioChatContent" : ""}`}
       >
         <Routes>
           <Route
             path="/"
-            element={<Home currentUser={currentUser} />}
+            element={
+              <Home
+                currentUser={currentUser}
+                accessToken={authenticatedToken}
+              />
+            }
           />
 
           <Route
@@ -99,7 +142,12 @@ function AppRoutes() {
 
           <Route
             path="/team-radio"
-            element={<TeamRadio currentUser={currentUser} />}
+            element={
+              <TeamRadio
+                currentUser={currentUser}
+                accessToken={authenticatedToken}
+              />
+            }
           />
 
           <Route
@@ -124,7 +172,12 @@ function AppRoutes() {
 
           <Route
             path="/my-garage"
-            element={<MyGarage currentUser={currentUser} />}
+            element={
+              <MyGarage
+                currentUser={currentUser}
+                accessToken={authenticatedToken}
+              />
+            }
           />
 
           <Route

@@ -891,7 +891,8 @@
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  background: var(--gray-400, #bcbcbc);
+  background: #bebebf
+    url("../../assets/images/teamradio/프로필.svg") center / cover no-repeat;
 }
 
 .more {
@@ -931,7 +932,7 @@
 .body {
   margin: 0;
   color: var(--gray-900, #111);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 16px;
   letter-spacing: -0.2px;
@@ -1971,8 +1972,8 @@
 
   position: relative;
   flex-shrink: 0;
-  height: var(--chat-height, min(874px, 100dvh));
-  max-height: 874px;
+  height: var(--chat-height, 100%);
+  
   min-height: 0;
   box-sizing: border-box;
   overflow: hidden;
@@ -2066,6 +2067,8 @@
 
   .message .avatar {
     flex-shrink: 0;
+    background: #bebebf
+      url("../../assets/images/teamradio/프로필.svg") center / cover no-repeat;
   }
 
   .message small {

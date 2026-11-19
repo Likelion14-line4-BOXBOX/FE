@@ -55,52 +55,19 @@ export const boards = [
 // 기존 목업 화면을 위한 데이터.
 // 실제 채팅 화면에서는 서버의 채팅방 목록을 사용합니다.
 export const races = [
-  {
-    id: "mexico",
-    title: "멕시코시티 그랑프리",
-    status: "scheduled",
-    remaining: "2일 3시간 40분",
-    round: 19,
-    sessions: [
-      {
-        id: "fp2",
-        name: "프리 프랙티스 2",
-        startsAt: "2026-10-31T07:00:00+09:00",
-        endsAt: "2026-10-31T08:00:00+09:00",
-      },
-    ],
-  },
-  {
-    id: "usa",
-    title: "미국 그랑프리",
-    status: "closed",
-    round: 18,
-  },
-  {
-    id: "singapore",
-    title: "싱가포르 그랑프리",
-    status: "closed",
-    round: 17,
-  },
-  {
-    id: "bahrain",
-    title: "바레인 그랑프리",
-    status: "closed",
-    round: 16,
-  },
-  {
-    id: "azerbaijan",
-    title: "아제르바이잔 그랑프리",
-    status: "closed",
-    round: 15,
-  },
-  {
-    id: "spain",
-    title: "스페인 그랑프리",
-    status: "closed",
-    round: 14,
-  },
-];
+  ["las-vegas", "라스베이거스 그랑프리", 21, "2026-11-19", "2026-11-21"],
+  ["sao-paulo", "상파울루 그랑프리", 20, "2026-11-06", "2026-11-08"],
+  ["mexico", "멕시코시티 그랑프리", 19, "2026-10-30", "2026-11-01"],
+  ["usa", "미국 그랑프리", 18, "2026-10-23", "2026-10-25"],
+  ["singapore", "싱가포르 그랑프리", 17, "2026-10-09", "2026-10-11"],
+  ["azerbaijan", "아제르바이잔 그랑프리", 16, "2026-09-24", "2026-09-26"],
+].map(([id, title, round, weekendStartsAt, weekendEndsAt]) => ({
+  id,
+  title,
+  round,
+  weekendStartsAt,
+  weekendEndsAt,
+}));
 
 const normalize = (value) =>
   String(value)
@@ -114,6 +81,8 @@ const aliases = {
   "세르히오 페레스": "세르히오 페레즈",
 };
 
+const seedLikeCounts = [4, 12, 7, 2];
+const seedPostCountByBoard = new Map();
 const seedTime = Date.UTC(2026, 10, 1);
 
 const seededPosts = boardSeed.map((post, index) => {
@@ -136,6 +105,9 @@ const seededPosts = boardSeed.map((post, index) => {
     );
   }
 
+  const boardPostIndex = seedPostCountByBoard.get(board.id) ?? 0;
+  seedPostCountByBoard.set(board.id, boardPostIndex + 1);
+
   const tag =
     aliases[post.tagId] ??
     board.tags.find(
@@ -156,7 +128,7 @@ const seededPosts = boardSeed.map((post, index) => {
     body: post.content,
     author: post.nickname,
     mine: false,
-    likes: 0,
+    likes: seedLikeCounts[boardPostIndex] ?? 0,
     liked: false,
     saved: false,
     createdAt: seedTime - index * 60_000,

@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { races } from "./radioData";
+
+export const PREVIEW_ROOM_ID = "preview-las-vegas";
 
 export default function useChatPreview({
   mode,
@@ -14,7 +17,7 @@ export default function useChatPreview({
   const enabled =
     mode === "live" || mode === "closed";
   const live = mode === "live";
-  const roomId = "preview-mexico";
+  const roomId = PREVIEW_ROOM_ID;
 
   const currentUser = {
     userId: "preview-user",
@@ -39,9 +42,9 @@ export default function useChatPreview({
   const room = {
     id: roomId,
     roomId,
-    raceId: "preview-race",
-    title: "멕시코시티 그랑프리",
-    round: 19,
+    raceId: races[0].id,
+    title: `${races[0].title} (데모)`,
+    round: races[0].round,
     status: live ? "LIVE" : "ARCHIVED",
     opensAt: at(-60),
     closesAt: at(live ? 60 : -1),
@@ -53,21 +56,21 @@ export default function useChatPreview({
   const sample = [
     {
       id: "preview-1",
-      text: "메시지메시지메시지메시지",
+      text: "라스베이거스는 야간 레이스라 보는 재미가 있어요.",
       nickname: "닉네임",
       createdAt: at(-40),
       mine: false,
     },
     {
       id: "preview-2",
-      text: "메시지메시지메시지",
+      text: "이번엔 어떤 팀이 빠를까요?",
       nickname: "닉네임",
       createdAt: at(-39),
       mine: false,
     },
     {
       id: "preview-3",
-      text: "메시지",
+      text: "직선 구간이 길어서 추월이 기대돼요.",
       nickname: "닉네임",
       createdAt: at(-38),
       mine: false,
@@ -80,28 +83,28 @@ export default function useChatPreview({
     },
     {
       id: "preview-4",
-      text: "메시지메시지메시지메시지",
+      text: "첫 랩부터 간격이 좁네요.",
       nickname: "닉네임",
       createdAt: at(-29),
       mine: false,
     },
     {
       id: "preview-5",
-      text: "메시지메시지메시지",
+      text: "타이어 온도가 관건일 것 같아요.",
       nickname: "닉네임",
       createdAt: at(-28),
       mine: false,
     },
     {
       id: "preview-6",
-      text: "메시지",
+      text: "피트 타이밍도 같이 봐요.",
       nickname: "닉네임",
       createdAt: at(-27),
       mine: false,
     },
     {
       id: "preview-mine",
-      text: "내 메시지",
+      text: "세션 시작하면 같이 이야기해요!",
       nickname,
       createdAt: at(-20),
       mine: true,

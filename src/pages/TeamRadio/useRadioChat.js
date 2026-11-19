@@ -290,8 +290,6 @@ export default function useRadioChat({
   );
 
   const roomStatus = selected?.status;
-  const archived =
-    roomStatus === "ARCHIVED";
 
   // 현재 방의 이력 조회 → SSE 연결
   useEffect(() => {
@@ -319,30 +317,41 @@ export default function useRadioChat({
       setLoading(true);
 
       try {
-        const [detail, history] =
-          await Promise.all([
-            api.getRoom(
-              selectedRoomId,
-              controller.signal,
-            ),
-            api.getMessages(
-              selectedRoomId,
-              { size: 100 },
-              controller.signal,
-            ),
-          ]);
+        const detail = await api.getRoom(selectedRoomId, controller.signal);
+        if (controller.signal.aborted) return;
 
-        if (controller.signal.aborted) {
+        const serverTime = Date.parse(detail.meta?.serverTime);
+        if (Number.isFinite(serverTime)) {
+          offsetRef.current = serverTime - Date.now();
+        }
+
+        const now = Date.now() + offsetRef.current;
+        const detailRoom = { ...detail.data, roomId: selectedRoomId };
+        const status = roomAt(detailRoom, now).status;
+        setClock(now);
+        setRooms((previous) => [
+          ...previous.filter((item) => String(item.roomId) !== selectedRoomId),
+          detailRoom,
+        ]);
+
+        if (status === "SCHEDULED") {
+          update({
+            id: selectedRoomId,
+            messages: [],
+            markers: [],
+            notices: [],
+            nextCursor: null,
+            hasNext: false,
+          });
           return;
         }
 
-        setRooms((previous) =>
-          previous.map((room) =>
-            room.roomId === selectedRoomId
-              ? { ...room, ...detail.data }
-              : room,
-          ),
+        const history = await api.getMessages(
+          selectedRoomId,
+          { size: 100 },
+          controller.signal,
         );
+        if (controller.signal.aborted) return;
 
         update({
           id: selectedRoomId,
@@ -358,10 +367,7 @@ export default function useRadioChat({
           hasNext: history.data.hasNext,
         });
 
-        if (
-          detail.data.status === "ARCHIVED" ||
-          archived
-        ) {
+        if (roomAt(detailRoom, Date.now() + offsetRef.current).status !== "LIVE") {
           return;
         }
 
@@ -502,7 +508,6 @@ export default function useRadioChat({
     api,
     selectedRoomId,
     roomStatus,
-    archived,
     user,
     retry,
     revision,
@@ -668,7 +673,7 @@ export default function useRadioChat({
       roomData.hasNext,
 
     getMessages: (roomId) =>
-      roomData.id === roomId
+      roomData.id === roomId && roomStatus && roomStatus !== "SCHEDULED"
         ? chatTimeline(
             roomData.messages,
             roomData.markers,
