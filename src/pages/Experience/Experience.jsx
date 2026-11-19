@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import illustration from "../../assets/images/로그인 안내.svg";
+import illustration from "../../assets/images/experience-reference.png";
 import styles from "./Experience.module.scss";
 
 export default function Experience({ onMember, onGuest }) {
@@ -24,20 +24,21 @@ export default function Experience({ onMember, onGuest }) {
 
   return (
     <section className={styles.page} aria-labelledby="experience-title">
-      <h1 id="experience-title">체험 방식을 선택해주세요</h1>
+      <h1 id="experience-title">회원 방식을 선택해주세요</h1>
       <div className={styles.options}>
         <button type="button" disabled={busy} onClick={onGuest}>
           <strong>비회원</strong>
           <span>일부 기능 조회 가능</span>
         </button>
         <button type="button" className={styles.member} disabled={busy} onClick={enterMember}>
-          <strong>{busy ? "로그인 중…" : "회원으로 체험"}</strong>
+          <strong>{busy ? "로그인 중…" : "회원"}</strong>
           <span>모든 기능 이용 가능</span>
         </button>
       </div>
       {error && <p role="alert" className={styles.error}>{error}</p>}
-      <div className={styles.road} aria-hidden="true" />
-      <img className={styles.car} src={illustration} alt="" aria-hidden="true" />
+      <div className={styles.artwork} aria-hidden="true">
+        <img src={illustration} alt="" />
+      </div>
     </section>
   );
 }

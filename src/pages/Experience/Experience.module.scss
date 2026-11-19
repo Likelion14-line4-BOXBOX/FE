@@ -3,8 +3,8 @@
   height: 100%;
   min-height: 540px;
   overflow: hidden;
-  padding: 150px 24px 32px;
-  background: #808080;
+  padding: 174px 30px 32px;
+  background: #7c7c7d;
   color: #fff;
 
   h1 {
@@ -13,7 +13,9 @@
     margin: 0 0 78px;
     text-align: center;
     font-size: 26px;
+    line-height: 38px;
     font-weight: 700;
+    white-space: nowrap;
   }
 }
 
@@ -26,7 +28,8 @@
   button {
     flex: 1;
     min-width: 0;
-    padding: 24px 8px;
+    height: 109px;
+    padding: 20px 4px;
     border: 0;
     border-radius: 16px;
     background: #f5f5f6;
@@ -38,8 +41,8 @@
   }
 
   strong, span { display: block; }
-  strong { font-size: 21px; }
-  span { margin-top: 12px; font-size: 14px; font-weight: 600; }
+  strong { font-size: 24px; line-height: 29px; }
+  span { margin-top: 10px; font-size: 14px; line-height: 20px; font-weight: 600; }
 
   .member { background: #bf0000; color: #fff; }
 }
@@ -52,30 +55,31 @@
   line-height: 1.5;
 }
 
-.road {
+.artwork {
   position: absolute;
-  width: 160%;
-  height: 250px;
-  border: 65px solid #222;
-  border-radius: 50%;
-  left: -40%;
-  bottom: -50px;
-  transform: rotate(-24deg);
-}
-
-.car {
-  position: absolute;
-  width: 130px;
-  height: 190px;
-  object-fit: contain;
-  left: 40px;
-  bottom: 22px;
-  transform: rotate(25deg);
+  inset: 56% 0 0;
+  overflow: hidden;
   pointer-events: none;
+
+  img {
+    position: absolute;
+    bottom: 0;
+    display: block;
+    width: 100%;
+    height: 227.272727%;
+    object-fit: fill;
+  }
 }
 
 @media (max-height: 650px) {
   .page { padding-top: 80px; }
   .page h1 { margin-bottom: 45px; }
-  .car { height: 120px; }
+  .artwork { top: 65%; }
+  .artwork img { height: 285.714286%; }
+}
+
+@media (max-width: 360px) {
+  .page { padding-right: 20px; padding-left: 20px; }
+  .page h1 { font-size: 23px; }
+  .options span { font-size: 12px; }
 }
