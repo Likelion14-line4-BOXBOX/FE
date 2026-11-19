@@ -36,6 +36,20 @@ const DEFAULT_BIO =
 const DEFAULT_TEAM = "페라리";
 const DEFAULT_DRIVER = "루이스 해밀턴";
 
+const DRIVER_DISPLAY_ORDER = {
+  "메르세데스": ["조지 러셀", "키미 안토넬리"],
+  "페라리": ["샤를 르클레르", "루이스 해밀턴"],
+  "레드불 레이싱": ["막스 베르스타펜", "아이작 하자르"],
+  "맥라렌": ["랜도 노리스", "오스카 피아스트리"],
+  "레이싱 불스": ["리암 로슨", "아비드 린드블라드"],
+  "알핀": ["피에르 가슬리", "프랑코 콜라핀토"],
+  "하스": ["올리버 베어먼", "라파엘 카마라"],
+  "아우디": ["니코 휠켄베르크", "가브리엘 보르톨레토"],
+  "윌리엄스": ["카를로스 사인츠", "알렉산더 알본"],
+  "애스턴 마틴": ["페르난도 알론소", "랜스 스트롤"],
+  "캐딜락": ["세르히오 페레스", "발테리 보타스"],
+};
+
 function getVisibilityKey(userId) {
   return `boxbox.garage.visibility.${userId}`;
 }
@@ -61,6 +75,24 @@ function writeVisibility(userId, value) {
     String(value),
   );
 }
+
+const TEAM_SELECTION_ORDER = [
+  "메르세데스",
+  "페라리",
+  "레드불 레이싱",
+  "맥라렌",
+  "레이싱 불스",
+  "알핀",
+  "하스",
+  "아우디",
+  "윌리엄스",
+  "애스턴 마틴",
+  "캐딜락",
+];
+
+const TEAM_SELECTION_INDEX = new Map(
+  TEAM_SELECTION_ORDER.map((name, index) => [name, index]),
+);
 
 const imageModules = import.meta.glob(
   "../../assets/images/mygarage/**/*.svg",
@@ -105,6 +137,7 @@ function getImage(
   }
 
   const legacyName = {
+    "세르히오 페레스": "세르히오 페레즈",
     "샤를 르클레르": "샤를 르끌레르",
     "아비드 린드블라드": "아르비드 린드블라드",
   }[name];
@@ -496,17 +529,18 @@ export default function MyGarage({
   const photoReaderRef =
     useRef(null);
 
-  const teams = garage.teams.map((team) => ({
-    name: displayName(team.name),
-    drivers: garage.drivers
-      .filter(
-        (driver) =>
-          driver.teamId === team.teamId,
-      )
-      .map((driver) =>
-        displayName(driver.name),
-      ),
-  }));
+  const teams = garage.teams
+    .map((team) => ({
+      name: displayName(team.name),
+      drivers: garage.drivers
+        .filter((driver) => driver.teamId === team.teamId)
+        .map((driver) => displayName(driver.name)),
+    }))
+    .sort(
+      (a, b) =>
+        (TEAM_SELECTION_INDEX.get(a.name) ?? TEAM_SELECTION_ORDER.length) -
+        (TEAM_SELECTION_INDEX.get(b.name) ?? TEAM_SELECTION_ORDER.length),
+    );
 
   const market = garage.market;
   const returnRate =
@@ -531,12 +565,17 @@ export default function MyGarage({
   const selectionTeam =
     pendingTeam ?? draft.team;
 
-  const driverOptions =
-    teams.find(
-      (team) =>
-        team.name === selectionTeam,
-    )?.drivers ?? [];
+  const teamDrivers =
+    teams.find((item) => item.name === selectionTeam)?.drivers ?? [];
 
+  const preferredDriverOrder = DRIVER_DISPLAY_ORDER[selectionTeam] ?? [];
+  const driverOptions =
+    selectionTeam === "하스"
+      ? preferredDriverOrder
+      : [
+          ...preferredDriverOrder.filter((name) => teamDrivers.includes(name)),
+          ...teamDrivers.filter((name) => !preferredDriverOrder.includes(name)),
+        ];
   const stampNumber = Math.min(
     23,
     Math.max(0, stampCount),
