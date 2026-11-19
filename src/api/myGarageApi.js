@@ -407,9 +407,13 @@ export async function updateMyGarageProfile(
 export function displayName(name) {
   return (
     {
-      "샤를 르클레르": "샤를 르끌레르",
+      "샤를 르끌레르": "샤를 르클레르",
+      "샤를 르클레드": "샤를 르클레르",
+      "아르비드 린드블라드": "아비드 린드블라드",
       레이싱불스: "레이싱 불스",
       레드불: "레드불 레이싱",
+      "알렉스 알본": "알렉산더 알본",
+      "세르히오 페레스": "세르히오 페레즈",
     }[name] ?? name
   );
 }
