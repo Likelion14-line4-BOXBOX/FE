@@ -69,13 +69,13 @@ function AppRoutes() {
     const member = await enterDemo();
     saveExperience(member);
     setExperience(member);
-    navigate("/", { replace: true });
+    navigate("/home", { replace: true });
   }
 
   function onGuest() {
     saveExperience({ mode: "guest" });
     setExperience({ mode: "guest" });
-    navigate("/", { replace: true });
+    navigate("/home", { replace: true });
     void leaveDemo().catch(() => {
       // 비회원 화면에서는 access token을 전달하지 않는다.
     });
@@ -134,7 +134,7 @@ function AppRoutes() {
     !isRadioChat &&
     (hideBottomNav || (isTeamRadio && view !== "home"));
 
-  if (!experience || pathname === "/experience") {
+  if (!experience || pathname === "/" || pathname === "/experience") {
     return <Experience onMember={onMember} onGuest={onGuest} />;
   }
 
@@ -146,7 +146,7 @@ function AppRoutes() {
         <MarketAccessProvider currentUser={currentUser} onLogin={onLogin}>
           <Routes>
             <Route
-              path="/"
+              path="/home"
               element={
                 <Home
                   currentUser={currentUser}
