@@ -1,6 +1,17 @@
 const timestamp = (value) =>
   value == null ? NaN : Date.parse(value);
 
+export function formatChatCountdown(value, now) {
+  const target = timestamp(value);
+  if (!Number.isFinite(target) || !Number.isFinite(now)) return null;
+
+  const totalMinutes = Math.max(0, Math.ceil((target - now) / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return hours ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+}
+
 // 운영 시간은 서버의 opensAt/closesAt 기준입니다.
 export function roomAt(room, now) {
   const opens = timestamp(room.opensAt);
@@ -15,7 +26,7 @@ export function roomAt(room, now) {
     room.status === "ARCHIVED" ||
     (valid && now >= closes)
       ? "ARCHIVED"
-      : valid && now >= opens
+      : room.status === "LIVE" && valid && now >= opens
         ? "LIVE"
         : "SCHEDULED";
 
@@ -69,7 +80,8 @@ export function chatTimeline(
     text: message.content,
     mine: Boolean(
       currentUserId &&
-        message.sender?.userId === currentUserId,
+        message.sender?.userId != null &&
+        String(message.sender.userId) === String(currentUserId),
     ),
     nickname: message.sender?.nickname ?? "",
     date: message.createdAt,
@@ -84,7 +96,7 @@ export function chatTimeline(
       id: `marker-${marker.markerId}`,
       systemType: "session",
       text: marker.label,
-      createdAt: marker.occurredAt,
+      createdAt: marker.occurredAt ?? marker.timestamp,
       isDeleted: false,
     });
   }
