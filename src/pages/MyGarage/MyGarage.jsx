@@ -104,7 +104,16 @@ function getImage(
     );
   }
 
-  return images[filename];
+  const legacyName = {
+    "샤를 르클레르": "샤를 르끌레르",
+    "아비드 린드블라드": "아르비드 린드블라드",
+  }[name];
+
+  return images[filename] ?? (
+    legacyName
+      ? images[`${prefix} - ${legacyName}${suffix}.svg`.normalize("NFC")]
+      : undefined
+  );
 }
 
 function GarageImage({
