@@ -36,7 +36,7 @@ const GARAGE_PATHS = [
 
 function AppRoutes() {
   // 회원 테스트: MOCK_USER / 비회원 테스트: null
-  const currentUser = MOCK_USER;
+  const currentUser = null;
 
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
