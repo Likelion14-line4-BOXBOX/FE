@@ -1,0 +1,56 @@
+:root {
+  /* Gray */
+  --gray-50: #f5f5f6;
+  --gray-100: #d9d9da;
+  --gray-200: #bebebf;
+  --gray-300: #8b8b8b;
+  --gray-400: #727272;
+  --gray-500: #5a5a5b;
+  --gray-600: #444444;
+  --gray-700: #2e2e2e;
+  --gray-800: #1a1a1a;
+  --gray-900: #030303;
+
+  /* Brand (Red) */
+  --brand-50: #ffded1;
+  --brand-100: #ffc1b3;
+  --brand-200: #ffa091;
+  --brand-300: #fa7f6f;
+  --brand-400: #e85c4d;
+  --brand-500: #da291c;
+  --brand-600: #bf0000;
+  --brand-700: #9c0000;
+  --brand-800: #760000;
+  --brand-900: #4e0000;
+  --brand-950: #290000;
+
+  /* Blue (flying fish blue) */
+  --blue-50: #d5f6ff;
+  --blue-100: #b6daff;
+  --blue-200: #93bdff;
+  --blue-300: #71a1ff;
+  --blue-400: #5085ef;
+  --blue-500: #2a66e4;
+  --blue-600: #0045d3;
+  --blue-700: #0021b3;
+  --blue-800: #00008f;
+  --blue-900: #070066;
+  --blue-950: #0e0045;
+
+  /* Gradient */
+  --gradient-line: linear-gradient(
+    90deg,
+    #00000000 0%,
+    #ff9a63 21%,
+    #ff6b41 34%,
+    #ff1100 59%,
+    #ba0d0099 85%,
+    #00000000 100%
+  );
+
+  /* Shadow */
+  --shadow-light: 0 0 40px #0303030d, 0 0 10px #03030308;
+  --shadow-medium: 0 0 40px #03030314, 0 0 10px #0303030f;
+  --shadow-red: 0 0 40px #bf000033, 0 0 10px #da291c4d;
+  --shadow-radio-inner: inset 0 4px 6px #ffffff3b, inset -4px 0 6px #ffffff33;
+}
