@@ -170,7 +170,8 @@ function DriverStocks({ stocks, roundId }) {
     );
 }
 
-export default function RaceMarket({ accessToken }) {    const [searchParams] = useSearchParams();
+export default function RaceMarket({ accessToken = null }) {
+    const [searchParams] = useSearchParams();
     const [market, setMarket] = useState(null);
     const [failed, setFailed] = useState(false);
     const [attempt, setAttempt] = useState(0);

@@ -1,0 +1,85 @@
+.page {
+  position: relative;
+  height: 100%;
+  min-height: 540px;
+  overflow: hidden;
+  padding: 174px 30px 32px;
+  background: #7c7c7d;
+  color: #fff;
+
+  h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 78px;
+    text-align: center;
+    font-size: 26px;
+    line-height: 38px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+}
+
+.options {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 16px;
+
+  button {
+    flex: 1;
+    min-width: 0;
+    height: 109px;
+    padding: 20px 4px;
+    border: 0;
+    border-radius: 16px;
+    background: #f5f5f6;
+    color: #000;
+    cursor: pointer;
+
+    &:disabled { opacity: .65; cursor: wait; }
+    &:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+  }
+
+  strong, span { display: block; }
+  strong { font-size: 24px; line-height: 29px; }
+  span { margin-top: 10px; font-size: 14px; line-height: 20px; font-weight: 600; }
+
+  .member { background: #bf0000; color: #fff; }
+}
+
+.error {
+  position: relative;
+  z-index: 1;
+  margin: 20px 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.artwork {
+  position: absolute;
+  inset: 56% 0 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  img {
+    position: absolute;
+    bottom: 0;
+    display: block;
+    width: 100%;
+    height: 227.272727%;
+    object-fit: fill;
+  }
+}
+
+@media (max-height: 650px) {
+  .page { padding-top: 80px; }
+  .page h1 { margin-bottom: 45px; }
+  .artwork { top: 65%; }
+  .artwork img { height: 285.714286%; }
+}
+
+@media (max-width: 360px) {
+  .page { padding-right: 20px; padding-left: 20px; }
+  .page h1 { font-size: 23px; }
+  .options span { font-size: 12px; }
+}
