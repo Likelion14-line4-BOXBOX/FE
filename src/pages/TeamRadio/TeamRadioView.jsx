@@ -1,3 +1,4 @@
+import garageDefaultAvatar from "../../assets/images/mygarage/프로필사진.svg";
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -612,6 +613,10 @@ export default function TeamRadio({
   const location = useLocation();
   const navigate = useNavigate(); 
   const garageProfile = useGarageProfile();
+  const myAvatarSrc =
+    currentUser?.userId && garageProfile.userId === currentUser.userId
+      ? garageProfile.avatarSrc || garageDefaultAvatar
+      : garageDefaultAvatar;
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -2095,7 +2100,11 @@ export default function TeamRadio({
 
             <article className={s.article}>
               <div className={s.author}>
-                <span className={s.avatar} />
+                {post.mine ? (
+                  <img className={s.avatar} src={myAvatarSrc} alt="" />
+                ) : (
+                  <span className={s.avatar} />
+                )}
 
                 <span>
                   <strong>
@@ -2269,7 +2278,11 @@ export default function TeamRadio({
                     </span>
                   )}
 
-                  <span className={s.avatar} />
+                  {comment.mine && !comment.isDeleted ? (
+                    <img className={s.avatar} src={myAvatarSrc} alt="" />
+                  ) : (
+                    <span className={s.avatar} />
+                  )}
 
                   <div className={s.commentBody}>
                     {comment.isDeleted ? (
