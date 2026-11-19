@@ -43,6 +43,23 @@ export function formatKoreanTime(value) {
   }).format(date);
 }
 
+export function formatRacePeriod(startsAt, endsAt) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const dates = [startsAt, endsAt].flatMap((value) => {
+    if (!value) return [];
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? []
+      : [formatter.format(date).replace('/', '.')];
+  });
+
+  return [...new Set(dates)].join(' ~ ') || '일정 미정';
+}
+
 export function mapPost(item, currentUserId) {
   return {
     ...item,

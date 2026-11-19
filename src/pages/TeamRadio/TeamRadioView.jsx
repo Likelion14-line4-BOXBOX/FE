@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import {
   useLocation,
@@ -7,7 +8,7 @@ import {
 import useTeamRadioData from './useTeamRadioData';
 
 import {
-  formatKoreanTime,
+  formatRacePeriod,
   formatPostDate,
   formatKoreanDate,
   formatChatTime,
@@ -602,6 +603,7 @@ function formatRemainingTime(target, now, fallback) {
 
 export default function TeamRadio({
   liveStatus = 'open',
+  demoEnabled = false,
   currentUser = null,
   onSendMessage,
   onLogin,
@@ -704,7 +706,6 @@ export default function TeamRadio({
         window.innerHeight;
 
       const height = Math.min(
-        874,
         content.clientHeight,
         viewportHeight,
       );
@@ -1577,6 +1578,16 @@ export default function TeamRadio({
                 </button>
               </article>
 
+              {demoEnabled && (
+                <button
+                  type="button"
+                  className={s.primary}
+                  onClick={() => setParams({ view: 'chat', preview: 'live' })}
+                >
+                  채팅 데모 입장
+                </button>
+              )}
+
               <h2>지난 채팅</h2>
 
               <div className={s.stack}>
@@ -1597,10 +1608,10 @@ export default function TeamRadio({
                     </span>
 
                     <span>
-                      {item.weekendStartsAt &&
-                      item.weekendEndsAt
-                        ? `${formatKoreanTime(item.weekendStartsAt)} ~ ${formatKoreanTime(item.weekendEndsAt)}`
-                        : '10.31 ~ 11.1'}
+                      {formatRacePeriod(
+                        item.weekendStartsAt,
+                        item.weekendEndsAt,
+                      )}
                     </span>
                   </button>
                 ))}

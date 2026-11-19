@@ -115,11 +115,21 @@ function PriceChart({ startPrice, price, isMock, history }) {
         );
     }
 
-    const samples = isMock
+    const originalSamples = isMock
         ? [0, 0.003, -0.001, 0.004, 0.002, 0].map((offset, index) =>
             Math.round(startPrice + (price - startPrice) * index / 5 + startPrice * offset),
         )
         : history;
+
+    const samples = originalSamples.length <= 6
+        ? originalSamples
+        : Array.from({ length: 6 }, (_, index) => {
+            const sourceIndex = Math.round(
+                index * (originalSamples.length - 1) / 5,
+            );
+
+            return originalSamples[sourceIndex];
+        });
 
     const min = Math.min(startPrice, ...samples);
     const max = Math.max(startPrice, ...samples);
