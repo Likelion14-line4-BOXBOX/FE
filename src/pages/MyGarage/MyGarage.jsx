@@ -432,7 +432,7 @@ export default function MyGarage({
 
   const serverProfile = {
     ...mappedProfile,
-    nickname: DEFAULT_NICKNAME,
+    nickname: mappedProfile.nickname || DEFAULT_NICKNAME,
     bio: DEFAULT_BIO,
     team:
       mappedProfile.team ?? DEFAULT_TEAM,
