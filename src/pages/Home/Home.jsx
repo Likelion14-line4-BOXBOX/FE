@@ -426,7 +426,7 @@ function makeRaceCard(homeData, now) {
   }
 
   return {
-    dday: getDday(race.scheduledStartAt, now),
+    dday: getDday(race.weekendStartsAt ?? race.scheduledStartAt, now),
     round: race.roundNumber == null ? "—" : `R${race.roundNumber}`,
     name: race.name,
     period: formatPeriod(race.weekendStartsAt, race.weekendEndsAt),
