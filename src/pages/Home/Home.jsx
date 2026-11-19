@@ -11,6 +11,9 @@ import LoginRequiredModal from "../../components/common/LoginRequiredModal/Login
 import useTeamRadioData from "../TeamRadio/useTeamRadioData";
 import useHomeData, { HOME_API_ENABLED } from "./useHomeData";
 
+import { displayName } from "../../api/myGarageApi";
+import { useGarageProfile } from "../../shared/garageProfile";
+
 import styles from "./Home.module.scss";
 
 const mockNextRace = {
@@ -426,7 +429,7 @@ function makeRaceCard(homeData, now) {
   }
 
   return {
-    dday: getDday(race.scheduledStartAt, now),
+    dday: getDday(race.weekendStartsAt ?? race.scheduledStartAt, now),
     round: race.roundNumber == null ? "—" : `R${race.roundNumber}`,
     name: race.name,
     period: formatPeriod(race.weekendStartsAt, race.weekendEndsAt),
@@ -457,6 +460,7 @@ export default function Home({
   onOpenMessages,
 }) {
   const navigate = useNavigate();
+  const garageProfile = useGarageProfile();
 
   const [product] = useState(
     () => products[Math.floor(Math.random() * products.length)],
@@ -505,7 +509,28 @@ export default function Home({
     }))
     .sort(sortLatest);
 
-  const latestPosts = localPosts.slice(0, 3);
+  const favoriteTeamName = displayName(
+  isAuthenticated && garageProfile.userId === currentUser.userId
+    ? garageProfile.team
+    : currentUser?.favoriteTeam?.name,
+);
+
+const myTeamBoard = isAuthenticated && boards.find(
+  (board) => board.type === "TEAM" && board.name === favoriteTeamName,
+);
+
+const previewBoardIds = [
+  myTeamBoard?.id,
+  boards.find((board) => board.type === "FREE")?.id,
+  boards.find((board) => board.type === "BEGINNER")?.id,
+];
+
+const latestPosts = previewBoardIds.flatMap((boardId) => {
+  if (boardId == null) return [];
+
+  const latest = localPosts.find((post) => post.boardId === String(boardId));
+  return latest ? [latest] : [];
+});
 
   function getBoardName(boardId) {
     const board = boards.find(

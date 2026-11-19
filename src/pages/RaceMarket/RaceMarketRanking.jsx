@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
     Link,
@@ -15,6 +15,7 @@ import styles from "./RaceMarketRanking.module.scss";
 import backIcon from "../../assets/images/racemarket/back-button.svg";
 import leftBracket from "../../assets/images/racemarket/left-bracket.svg";
 import rightBracket from "../../assets/images/racemarket/right-bracket.svg";
+import buySellStyles from "./RaceMarketBuySell.module.scss";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api")
     .replace(/\/+$/, "")
@@ -413,8 +414,9 @@ function StampBoard({ summary }) {
 }
 
 function ProfileView({ user, backUrl, garage, isMock, error, retry }) {
-    const { onLogin } = useMarketAccess();
+    const { isAuthenticated, onLogin } = useMarketAccess();
     const [modalOpen, setModalOpen] = useState(false);
+    const unsupportedDialogRef = useRef(null);
 
     const team = garage?.profile.favoriteTeam;
     const driver = garage?.profile.favoriteDriver;
@@ -422,7 +424,11 @@ function ProfileView({ user, backUrl, garage, isMock, error, retry }) {
     const summary = garage?.stampSummary;
 
     function memberAction() {
-        setModalOpen(true);
+        if (isAuthenticated) {
+            unsupportedDialogRef.current?.showModal();
+        } else {
+            setModalOpen(true);
+        }
     }
 
     return (
@@ -553,6 +559,19 @@ function ProfileView({ user, backUrl, garage, isMock, error, retry }) {
                     }}
                 />
             )}
+
+            <dialog
+                ref={unsupportedDialogRef}
+                className={`${buySellStyles.dialog} ${styles.unsupportedDialog}`}
+                aria-labelledby="unsupported-feature-title"
+            >
+                <h2 id="unsupported-feature-title">
+                    아직 지원하지 않는 기능이에요.
+                </h2>
+                <form method="dialog">
+                    <button type="submit">확인</button>
+                </form>
+            </dialog>
         </div>
     );
 }

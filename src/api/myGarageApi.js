@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || "/api"
-).replace(/\/$/, "");
+).replace(/\/+$/, "").replace(/(?:\/api)?$/, "/api");
 
 // true: 목업만 사용
-// false 또는 미설정: API 우선, 조회 실패 시 목업 표시
+// false 또는 미설정: 자산과 스탬프는 조회에 성공한 값만 표시.
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 async function request(path, { token, ...options } = {}) {
@@ -85,7 +85,7 @@ async function request(path, { token, ...options } = {}) {
 // 아래 ID는 목업 전용입니다.
 const mockTeamData = [
   ["mercedes", "메르세데스", ["조지 러셀", "키미 안토넬리"]],
-  ["ferrari", "페라리", ["샤를 르끌레르", "루이스 해밀턴"]],
+  ["ferrari", "페라리", ["샤를 르클레르", "루이스 해밀턴"]],
   ["redbull", "레드불 레이싱", ["막스 베르스타펜", "아이작 하자르"]],
   ["mclaren", "맥라렌", ["랜도 노리스", "오스카 피아스트리"]],
   ["racingbulls", "레이싱 불스", ["리암 로슨", "아비드 린드블라드"]],
@@ -93,7 +93,7 @@ const mockTeamData = [
   ["alpine", "알핀", ["피에르 가슬리", "프랑코 콜라핀토"]],
   ["williams", "윌리엄스", ["알렉산더 알본", "카를로스 사인츠"]],
   ["audi", "아우디", ["니코 휠켄베르크", "가브리엘 보르톨레토"]],
-  ["cadillac", "캐딜락", ["발테리 보타스", "세르히오 페레즈"]],
+  ["cadillac", "캐딜락", ["발테리 보타스", "세르히오 페레스"]],
   ["haas", "하스", ["올리버 베어먼", "라파엘 카마라"]],
 ];
 
@@ -138,7 +138,7 @@ const mockMarket = {
 
 const mockStamps = {
   season: 2026,
-  watchedCount: 5,
+  watchedCount: 0,
   totalRaces: 23,
   items: [],
 };
@@ -180,9 +180,18 @@ export function getGarageAccessToken() {
   }
 }
 
-// 현재 BE dev에는 reference-data API가 없어
-// 공개된 현재 라운드의 선수 응답에서 실제 팀·선수 ID를 가져옵니다.
 async function getRoster(options) {
+  try {
+    const roster = await request("/reference-data", options);
+    if (!Array.isArray(roster.teams) || !Array.isArray(roster.drivers)) {
+      throw new Error("팀·선수 기준정보 응답 형식을 확인해 주세요.");
+    }
+    return { teams: roster.teams, drivers: roster.drivers };
+  } catch (error) {
+    if (error.status !== 404) throw error;
+  }
+
+  // 기준정보 API가 아직 없는 구버전 서버에서만 기존 목록을 사용합니다.
   const { round } = await request(
     "/market/rounds/current",
     options,
@@ -279,7 +288,7 @@ export async function getMyGarageData({
     failures.push("profile");
   }
 
-  let stamps = fallback.stamps;
+  let stamps = null;
 
   if (profileSource === "api") {
     try {
@@ -297,7 +306,7 @@ export async function getMyGarageData({
     failures.push("stamps");
   }
 
-  let market = fallback.market;
+  let market = null;
 
   if (marketResult.status === "fulfilled") {
     const value = marketResult.value;
@@ -407,9 +416,14 @@ export async function updateMyGarageProfile(
 export function displayName(name) {
   return (
     {
-      "샤를 르클레르": "샤를 르끌레르",
+      "샤를 르끌레르": "샤를 르클레르",
+      "샤를 르클레드": "샤를 르클레르",
+      "아르비드 린드블라드": "아비드 린드블라드",
+      "하파엘 카마라": "라파엘 카마라",
       레이싱불스: "레이싱 불스",
       레드불: "레드불 레이싱",
+      "알렉스 알본": "알렉산더 알본",
+      "세르히오 페레즈": "세르히오 페레스",
     }[name] ?? name
   );
 }
@@ -501,6 +515,8 @@ export function useMyGarageData({
 }) {
   const [result, setResult] = useState(() => ({
     ...getMockGarageData(),
+    market: USE_MOCK ? mockMarket : null,
+    stamps: USE_MOCK ? mockStamps : null,
     profileSource: USE_MOCK ? "mock" : "fallback",
   }));
 

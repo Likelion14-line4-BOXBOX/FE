@@ -363,7 +363,7 @@ function RaceMarketMyView({
                                     <div className={styles.holdingPrice}>
                                         <strong>{format(price)}</strong>
                                         <small className={tone(rate)}>
-                                            {!isMock && "매입 대비 "}{percent(rate)}
+                                            {!isMock}{percent(rate)}
                                         </small>
                                     </div>
                                 </li>
