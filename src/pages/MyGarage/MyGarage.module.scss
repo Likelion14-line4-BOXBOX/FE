@@ -851,3 +851,16 @@
   box-shadow: none;
   border-color: #E0E0E0;
 }
+.marketStats strong.negative {
+  color: #1E5BD8;
+}
+
+.stampCard .stampStatus {
+  display: grid;
+  height: 100%;
+  margin: 0;
+  padding: 16px;
+  place-items: center;
+  color: #fff;
+  text-align: center;
+}
