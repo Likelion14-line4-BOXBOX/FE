@@ -26,6 +26,18 @@ const profileImages = import.meta.glob(
     { eager: true, query: "?url", import: "default" },
 );
 
+const rankingProfileImages = import.meta.glob(
+    "../../assets/images/racemarket/rankingProfiles/*.svg",
+    { eager: true, query: "?url", import: "default" },
+);
+
+const rankingProfileMap = Object.fromEntries(
+    Object.entries(rankingProfileImages).map(([path, src]) => [
+        path.split("/").pop().replace(/\.svg$/, "").normalize("NFC"),
+        src,
+    ]),
+);
+
 const stampImages = import.meta.glob(
     "../../assets/images/mygarage/레이스 스탬프 - *.svg",
     { eager: true, query: "?url", import: "default" },
@@ -170,9 +182,19 @@ function getMockRanking(period, metric) {
 }
 
 function Avatar({ user, className }) {
+    const [params] = useSearchParams();
+    const { metric } = getFilters(params);
+    const rank = Number(user.rank);
+    const nickname = (user.nickname ?? "").normalize("NFC");
+    const keepDefault = metric !== "returns" || rank === 3 || rank === 10;
+    const customImage = rankingProfileMap[nickname];
+    const src = keepDefault
+        ? defaultAvatar(rank)
+        : customImage ?? defaultAvatar(rank);
+
     return (
         <div className={className} aria-hidden="true">
-            <img src={defaultAvatar(user.rank)} alt="" />
+            <img src={src} alt="" />
         </div>
     );
 }
