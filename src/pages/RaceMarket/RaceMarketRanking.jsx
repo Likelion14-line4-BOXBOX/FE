@@ -186,8 +186,9 @@ function Avatar({ user, className }) {
     const { metric } = getFilters(params);
     const rank = Number(user.rank);
     const nickname = (user.nickname ?? "").normalize("NFC");
-    const keepDefault = metric !== "returns" || rank === 3 || rank === 10;
     const customImage = rankingProfileMap[nickname];
+    const keepDefault = metric === "returns" && (rank === 3 || rank === 10);
+
     const src = keepDefault
         ? defaultAvatar(rank)
         : customImage ?? defaultAvatar(rank);
