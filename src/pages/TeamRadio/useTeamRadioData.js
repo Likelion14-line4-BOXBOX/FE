@@ -177,7 +177,29 @@ function getPostSnapshot() {
   if (!postSnapshot) {
     const saved = readSnapshot(postStorageKey);
     if (Array.isArray(saved)) {
-      postSnapshot = saved;
+      const archivePosts = initialPosts.filter(
+        (item) => item.boardId === 'archive',
+      );
+      const savedIds = new Set(saved.map((item) => item.postId));
+      const boards = makeBoards();
+
+      // 기존 아카이브 샘플만 교체하고 나머지 저장된 글은 유지합니다.
+      postSnapshot = [
+        ...saved
+          .filter(
+            (item) =>
+              item.boardId !== 'archive' || !/^archive-[0-5]$/.test(item.postId),
+          )
+          .map((item) => {
+            const seed = archivePosts.find((post) => post.id === item.postId);
+            return seed
+              ? { ...item, author: { ...item.author, nickname: seed.author } }
+              : item;
+          }),
+        ...archivePosts
+          .filter((item) => !savedIds.has(item.id))
+          .map((item) => makePost(item, boards)),
+      ];
     } else {
       const boards = makeBoards();
       postSnapshot = initialPosts.map((item) =>
