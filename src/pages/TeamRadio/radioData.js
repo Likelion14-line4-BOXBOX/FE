@@ -48,7 +48,7 @@ export const boards = [
   {
     id: "archive",
     name: "Archive",
-    tags: ["전체"],
+    tags: ["전체", "에스테반 오콘", "유키 츠노다"],
   },
 ];
 
@@ -148,41 +148,24 @@ const seededPosts = boardSeed.map((post, index) => {
   };
 });
 
-// 아카이브는 기존 샘플 유지
-const archivePosts = Array.from(
-  { length: 6 },
-  (_, index) => ({
-    id: `archive-${index}`,
-    boardId: "archive",
-    tag: "미사용태그",
-    title:
-      index === 1
-        ? "루이스 이야기 함께 나눠요"
-        : "게시글 제목 게시글 제목 게시글",
-    body:
-      "글 내용 글 내용 글 내용 글 내용 글 내용 글 내용\n" +
-      "팀 라디오에서 함께 이야기를 나눠요.",
-    author: "닉네임",
-    mine: false,
-    likes: 5,
-    liked: false,
-    saved: false,
-    date: "10/30 12:14",
-    createdAt: Date.UTC(
-      index < 3 ? 2025 : 2024,
-      11,
-      2 - (index % 3),
-    ),
-    images: [],
-    comments: [
-      {
-        id: `archive-${index}-comment`,
-        text: "댓글 댓글 댓글 댓글",
-        mine: false,
-      },
-    ],
-  }),
-);
+const archivePosts = [
+  {
+    id: "archive-ocon-20260920",
+    author: "새벽레이스졸려요",
+    tag: "에스테반 오콘",
+    title: "오콘 또 사고쳤네",
+    body: "아니 간격 좁은데 그냥 들어가면 어캄 하",
+    createdAt: Date.parse("2026-09-20T00:00:00+09:00"),
+  },
+  {
+    id: "archive-tsunoda-20251030",
+    author: "스즈카1코너",
+    tag: "유키 츠노다",
+    title: "유키 재계약 안하나?",
+    body: "이번 시즌이 정말 끝인가 ㅜㅜ",
+    createdAt: Date.parse("2025-10-30T00:00:00+09:00"),
+  },
+].map((post) => ({ ...post, boardId: "archive" }));
 
 export const initialPosts = [
   ...seededPosts,

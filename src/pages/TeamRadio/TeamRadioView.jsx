@@ -1245,9 +1245,7 @@ export default function TeamRadio({
         onClick={() => openPost(item)}
       >
         <span className={s.redTag}>
-          {isArchivePost(item)
-            ? '미사용태그'
-            : item.tag}
+          {item.tag}
         </span>
 
         <strong>{item.title}</strong>
@@ -2107,17 +2105,8 @@ export default function TeamRadio({
                 )}
 
                 <span>
-                  <strong>
-                    {isArchivePost(post)
-                      ? `${post.author} · ${postDate(post)}`
-                      : post.author}
-                  </strong>
-
-                  {!isArchivePost(post) && (
-                    <small>
-                      {postDate(post)}
-                    </small>
-                  )}
+                  <strong>{post.author}</strong>
+                  <small>{formatPostDate(post.createdAt, now)}</small>
                 </span>
 
                 <button
@@ -2181,9 +2170,7 @@ export default function TeamRadio({
               </div>
 
               <span className={s.redTag}>
-                {isArchivePost(post)
-                  ? '미사용태그'
-                  : post.tag}
+                {post.tag}
               </span>
 
               <h2>{post.title}</h2>
@@ -2332,6 +2319,7 @@ export default function TeamRadio({
 
                           <button
                             type="button"
+                            disabled={!radio.isAuthenticated}
                             onClick={() =>
                               beginReply(comment)
                             }
@@ -2430,26 +2418,28 @@ export default function TeamRadio({
               ))}
             </div>
 
-            <div className={s.composerWrap}>
-              {editingComment && (
-                <button
-                  type="button"
-                  className={s.replyNotice}
-                  onClick={() => {
-                    setEditingComment(null);
-                    setInput('');
-                  }}
-                >
-                  댓글 수정 중 · 취소 ×
-                </button>
-              )}
+            {radio.isAuthenticated && (
+              <div className={s.composerWrap}>
+                {editingComment && (
+                  <button
+                    type="button"
+                    className={s.replyNotice}
+                    onClick={() => {
+                      setEditingComment(null);
+                      setInput('');
+                    }}
+                  >
+                    댓글 수정 중 · 취소 ×
+                  </button>
+                )}
 
-              {composer(
-                addComment,
-                '댓글',
-                '메시지를 입력하세요',
-              )}
-            </div>
+                {composer(
+                  addComment,
+                  '댓글',
+                  '메시지를 입력하세요',
+                )}
+              </div>
+            )}
           </>
         ) : (
           <>
